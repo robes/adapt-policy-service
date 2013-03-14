@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:mvc="http://www.springframework.org/schema/mvc"
+  xmlns:aop="http://www.springframework.org/schema/aop"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+       http://www.springframework.org/schema/mvc 
+       http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+  <mvc:annotation-driven/>
+  <context:component-scan base-package="edu.isi.policy.controller"/>
+  <bean id="policySession"
+    class="edu.isi.policy.service.drools.DroolsStatefulPolicySession"
+    scope="singleton"
+    >
+    <!-- uncomment out the scoped-proxy if changing the bean scope to session -->
+    <!-- 
+    <aop:scoped-proxy proxy-target-class="false"/>
+    -->
+    <!-- Any global variables that are used in the rules files -->
+    <constructor-arg>
+      <map>
+        <!-- Debug logging for the rules engine -->
+        <entry key="logger" value-ref="logger"/>
+        <!-- User-configurable defaults for number of streams and buffer size based on hosts -->
+        <!-- 
+        <entry key="defaultStreams">
+          <bean class="edu.isi.policy.util.ResourceExpressionPairMap">
+            <constructor-arg value="/WEB-INF/default-streams.txt"></constructor-arg>  
+          </bean>
+        </entry>
+        <entry key="defaultBuffersize">
+          <bean class="edu.isi.policy.util.ResourceExpressionPairMap">
+            <constructor-arg value="/WEB-INF/default-buffersize.txt"></constructor-arg>  
+          </bean>
+        </entry>
+        -->
+        <!-- user-configurable general default for parallel level -->
+        <entry key="third_party_transfer_parallel_default">
+          <value type="java.lang.Integer">4</value>
+        </entry>
+        <!-- statistics log for collecting transfer data -->
+        <entry key="transferStatisticsLog">
+          <bean class="edu.isi.policy.util.TransferStatisticsLogImpl"/>
+        </entry>
+      </map>
+    </constructor-arg>
+    <constructor-arg>
+      <set>
+        <value>pegasus.drl</value> 
+      </set>
+    </constructor-arg>
+  </bean>
+  <bean id="logger" class="org.apache.log4j.Logger" factory-method="getLogger">
+    <constructor-arg type="java.lang.Class" value="edu.isi.policy.service.PolicyService"/>
+  </bean>
+  <bean id="policyService"
+    class="edu.isi.policy.service.PolicyServiceImpl"
+    scope="singleton"
+    >
+    <property name="policySession" ref="policySession"/>
+  </bean>
+  <bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+    <property name="defaultContentType" value="application/json"/>
+    <property name="ignoreAcceptHeader" value="false"/>
+    <property name="favorPathExtension" value="false"/>
+    <property name="mediaTypes">
+      <map>
+        <entry key="json" value="application/json"/>
+      </map>
+    </property>
+    <property name="defaultViews">
+      <list>
+        <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/>
+      </list>
+    </property>
+  </bean>
+</beans>
+    

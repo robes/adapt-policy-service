@@ -1,0 +1,74 @@
+package edu.isi.policy
+
+import org.apache.log4j.Logger;
+import edu.isi.policy.entity.Transfer;
+import gov.lbl.srm.client.main.IPassiveTransferMonitor;
+
+global Logger logger;
+global IPassiveTransferMonitor passiveTransferMonitor;
+
+declare PTMStatistics
+  currentTxfRate: Long
+  totalTransferredData: Long
+  currentNumberOfStreams: Long
+end
+
+rule "Read passive monitor transfer statistics"
+salience 2500
+when
+  not PTMStatistics()
+  exists Transfer(properties["max_streams"] == null || properties["max_rate"] == null)
+  eval(passiveTransferMonitor != null)
+then
+  # PTM may not be in the classpath, so reference this class at runtime
+  long[] $statistics = ((gov.lbl.srm.client.main.IPassiveTransferMonitor)passiveTransferMonitor).getStatistics();
+  PTMStatistics $stats = new PTMStatistics();
+  $stats.setCurrentTxfRate($statistics[0]);
+  $stats.setTotalTransferredData($statistics[1]);
+  $stats.setCurrentNumberOfStreams($statistics[2]);
+  insert($stats);
+  if(logger.isInfoEnabled()) {
+    logger.info("Read passive monitor statistics: " + $stats);
+  }
+end 
+
+rule "Clean up passive monitor transfer statistics"
+no-loop
+salience -2500
+when
+  $ptm: PTMStatistics()
+  not Transfer(properties["max_streams"] == null || properties["max_rate"] == null)
+then
+  retract($ptm);
+  if(logger.isDebugEnabled()) {
+    logger.debug("Cleared passive monitor statistics.");
+  }
+end
+
+rule "Assign PTM max_rate when greater than default"
+salience 2000
+when
+  $ptm: PTMStatistics(currentTxfRate > default_max_rate, $currentTxfRate: currentTxfRate)
+  $t: Transfer(properties["max_rate"] == null)
+then
+  modify($t) {
+    setProperty("max_rate", $currentTxfRate.toString())
+  }
+  if(logger.isInfoEnabled()) {
+    logger.info("Set max_rate to PTM rate of " + $currentTxfRate + " on transfer " + $t);
+  }
+end
+
+rule "Assign PTM max_streams when greater than default"
+salience 2000
+when
+  $ptm: PTMStatistics(currentNumberOfStreams > default_max_streams, $currentNumberOfStreams: currentNumberOfStreams)
+  $t: Transfer(properties["max_streams"] == null)
+then
+  modify($t) {
+    setProperty("max_streams", $currentNumberOfStreams.toString())
+  }
+  if(logger.isInfoEnabled()) {
+    logger.info("Set max_streams to PTM of " + $currentNumberOfStreams + " on transfer " + $t);
+  }
+end

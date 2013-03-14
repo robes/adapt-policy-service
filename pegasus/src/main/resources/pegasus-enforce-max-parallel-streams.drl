@@ -1,0 +1,189 @@
+package edu.isi.policy
+
+/*
+  These rules enforce max parallel streams between two hosts, but in a greedy
+  implementation that grants the first groups their allotment until the threshold is 
+  exceeded.  From there only parallel stream levels that fall below the headroom are
+  allowed.  However each transfer will get at least 1 parallel stream.
+*/
+import edu.isi.policy.entity.ResourceExpressionPair;
+
+global Map maxParallelStreams;
+
+declare HostPairGroupParallelStreams
+  sourceHost: String
+  destinationHost: String
+  groupId: String
+  parallelStreams: Integer
+end
+
+rule "Add host pair group parallel streams for third-party transfer"
+when
+  Transfer(source.getScheme() != "file", destination.getScheme() != "file", $sourceHost:source.getHost(), $destinationHost:destination.getHost(), $group_id: properties["group_id"] != null, $parallel_streams:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  not HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id)
+then
+  HostPairGroupParallelStreams $h = new HostPairGroupParallelStreams();
+  $h.setSourceHost($sourceHost);
+  $h.setDestinationHost($destinationHost);
+  $h.setGroupId($group_id.toString());
+  $h.setParallelStreams(Integer.parseInt($parallel_streams.toString()));
+  insert($h);
+  if(logger.isDebugEnabled()) {
+    logger.debug("Added HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Adjust host pair group parallel streams for third-party transfer"
+when
+  Transfer(source.getScheme() != "file", destination.getScheme() != "file", $sourceHost:source.getHost(), $destinationHost:destination.getHost(), $group_id:properties["group_id"] != null, $ps_string:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  $parallel_streams: Integer() from Integer.parseInt($ps_string.toString())
+  $h: HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id, parallelStreams != $parallel_streams)
+then
+  modify($h) {
+    setParallelStreams($parallel_streams)
+  }
+  
+  if(logger.isDebugEnabled()) {
+    logger.debug("Modified HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Enforce max parallel streams for third-party transfer"
+#no-loop
+when
+  $t:Transfer(source.getScheme() != "file", destination.getScheme() != "file", $sourceHost:source.getHost(), $destinationHost:destination.getHost(), $current_parallel:properties["parallel"] != null, properties["parallel"] > 1, properties["STATUS"] == null) 
+  $aggregated_streams: Number() from accumulate(HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, $parallel_streams:parallelStreams), sum($parallel_streams))
+  $max_streams: Number(this < $aggregated_streams) from maxParallelStreams.get(new ResourceExpressionPair($sourceHost.toString(), $destinationHost.toString()))
+then
+  if(logger.isDebugEnabled()) {
+    logger.debug("calculated aggregated streams " + $aggregated_streams + " for " + $sourceHost + " to " + $destinationHost + " violates threshold of " + $max_streams);
+  }
+  Long $diff = Long.parseLong($current_parallel.toString()) - ($aggregated_streams.longValue() - $max_streams.longValue());
+  if($diff < Long.parseLong($current_parallel.toString())) {
+    modify($t) {
+      setProperty("parallel", $diff.toString())
+    }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Set parallel=" + $diff + " for transfer " + $t);
+    }
+  }
+  else {
+    if(logger.isDebugEnabled()) {
+      logger.debug("aggregated streams violate threshold but " + $current_parallel + " is already lower than difference " + $diff + ".  No action taken.");
+    }
+  }
+end
+
+rule "Add host pair group parallel streams for two-party download transfer"
+when
+  Transfer(source.getScheme() != "file", destination.getScheme() == "file", $sourceHost:source.getHost(), $destinationHost:properties["local_file_host"] != null, $group_id: properties["group_id"] != null, $parallel_streams:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  not HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id)
+then
+  HostPairGroupParallelStreams $h = new HostPairGroupParallelStreams();
+  $h.setSourceHost($sourceHost);
+  $h.setDestinationHost($destinationHost.toString());
+  $h.setGroupId($group_id.toString());
+  $h.setParallelStreams(Integer.parseInt($parallel_streams.toString()));
+  insert($h);
+  if(logger.isDebugEnabled()) {
+    logger.debug("Added HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Adjust host pair group parallel streams for two-party download transfer"
+when
+  Transfer(source.getScheme() != "file", destination.getScheme() == "file", $sourceHost:source.getHost(), $destinationHost:properties["local_file_host"] != null, $group_id:properties["group_id"] != null, $ps_string:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  $parallel_streams: Integer() from Integer.parseInt($ps_string.toString())
+  $h: HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id, parallelStreams != $parallel_streams)
+then
+  modify($h) {
+    setParallelStreams($parallel_streams)
+  }
+  
+  if(logger.isDebugEnabled()) {
+    logger.debug("Modified HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Enforce max parallel streams for two-party download transfer"
+#no-loop
+when
+  $t:Transfer(source.getScheme() != "file", destination.getScheme() == "file", $sourceHost:source.getHost(), $destinationHost:properties["local_file_host"] != null, $current_parallel:properties["parallel"] != null, properties["parallel"] > 1, properties["STATUS"] == null) 
+  $aggregated_streams: Number() from accumulate(HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, $parallel_streams:parallelStreams), sum($parallel_streams))
+  $max_streams: Number(this < $aggregated_streams) from maxParallelStreams.get(new ResourceExpressionPair($sourceHost.toString(), $destinationHost.toString()))
+then
+  if(logger.isDebugEnabled()) {
+    logger.debug("calculated aggregated streams " + $aggregated_streams + " for " + $sourceHost + " to " + $destinationHost + " violates threshold of " + $max_streams);
+  }
+  Long $diff = Long.parseLong($current_parallel.toString()) - ($aggregated_streams.longValue() - $max_streams.longValue());
+  if($diff < Long.parseLong($current_parallel.toString())) {
+    modify($t) {
+      setProperty("parallel", $diff.toString())
+    }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Set parallel=" + $diff + " for transfer " + $t);
+    }
+  }
+  else {
+    if(logger.isDebugEnabled()) {
+      logger.debug("aggregated streams violate threshold but " + $current_parallel + " is already lower than difference " + $diff + ".  No action taken.");
+    }
+  }
+end
+
+rule "Add host pair group parallel streams for two-party upload transfer"
+when
+  Transfer(source.getScheme() == "file", destination.getScheme() != "file", $destinationHost:destination.getHost(), $sourceHost:properties["local_file_host"] != null, $group_id: properties["group_id"] != null, $parallel_streams:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  not HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id)
+then
+  HostPairGroupParallelStreams $h = new HostPairGroupParallelStreams();
+  $h.setSourceHost($sourceHost.toString());
+  $h.setDestinationHost($destinationHost);
+  $h.setGroupId($group_id.toString());
+  $h.setParallelStreams(Integer.parseInt($parallel_streams.toString()));
+  insert($h);
+  if(logger.isDebugEnabled()) {
+    logger.debug("Added HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Adjust host pair group parallel streams for two-party upload transfer"
+when
+  Transfer(source.getScheme() == "file", destination.getScheme() != "file", $destinationHost:destination.getHost(), $sourceHost:properties["local_file_host"] != null, $group_id:properties["group_id"] != null, $ps_string:properties["parallel"] != null, properties["STATUS"] != "COMPLETED")
+  $parallel_streams: Integer() from Integer.parseInt($ps_string.toString())
+  $h: HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, groupId == $group_id, parallelStreams != $parallel_streams)
+then
+  modify($h) {
+    setParallelStreams($parallel_streams)
+  }
+  
+  if(logger.isDebugEnabled()) {
+    logger.debug("Modified HostPairGroupParallelStreams " + $h);
+  }
+end
+
+rule "Enforce max parallel streams for two-party upload transfer"
+#no-loop
+when
+  $t:Transfer(source.getScheme() == "file", destination.getScheme() != "file", $destinationHost:destination.getHost(), $sourceHost:properties["local_file_host"] != null, $current_parallel:properties["parallel"] != null, properties["parallel"] > 1, properties["STATUS"] == null) 
+  $aggregated_streams: Number() from accumulate(HostPairGroupParallelStreams(sourceHost == $sourceHost, destinationHost == $destinationHost, $parallel_streams:parallelStreams), sum($parallel_streams))
+  $max_streams: Number(this < $aggregated_streams) from maxParallelStreams.get(new ResourceExpressionPair($sourceHost.toString(), $destinationHost.toString()))
+then
+  if(logger.isDebugEnabled()) {
+    logger.debug("calculated aggregated streams " + $aggregated_streams + " for " + $sourceHost + " to " + $destinationHost + " violates threshold of " + $max_streams);
+  }
+  Long $diff = Long.parseLong($current_parallel.toString()) - ($aggregated_streams.longValue() - $max_streams.longValue());
+  if($diff < Long.parseLong($current_parallel.toString())) {
+    modify($t) {
+      setProperty("parallel", $diff.toString())
+    }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Set parallel=" + $diff + " for transfer " + $t);
+    }
+  }
+  else {
+    if(logger.isDebugEnabled()) {
+      logger.debug("aggregated streams violate threshold but " + $current_parallel + " is already lower than difference " + $diff + ".  No action taken.");
+    }
+  }
+end

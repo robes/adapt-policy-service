@@ -1,0 +1,55 @@
+package edu.isi.policy.test;
+
+import edu.isi.policy.entity.Transfer;
+import edu.isi.policy.util.TransferList;
+import edu.isi.pdps.PlacementClient;
+import edu.isi.pdps.Operation;
+import edu.isi.pdps.Placement;
+import java.util.Properties;
+import org.apache.log4j.Logger;
+
+global Properties placementProperties;
+global Logger logger;
+
+rule "Create the pdps client if it doesn't exist"
+salience 20
+when
+    not(exists(PlacementClient()))
+then
+    logger.info("Creating placement client");
+    insert(new PlacementClient(placementProperties));
+end
+
+rule "Remove jacoby.isi.edu puts and hand them to the pdps"
+when
+	$transferList: TransferList(size() > 0)
+	$transfer: Transfer(destination.getHost() == "jacoby.isi.edu", $source: source, $destination: destination, $id: id) from $transferList 
+	$placementClient: PlacementClient()
+then
+    logger.info("Adding transfer " + $id + " to the pdps requests.");
+    modify($placementClient) {
+        addPlacementRequest(new Placement(Operation.TRANSFER, $source, $destination))
+    }
+    modify($transferList) {
+       $transferList.remove($transferList.indexOf($transfer)),
+    }
+    logger.debug("Removed transfer " + $id + " from the transfer list.");
+end
+
+
+rule "Submit pdps requests"
+salience -1000
+when
+	$placementClient: PlacementClient(getNumberOfPlacementsToRequest() > 0)
+then
+	logger.info("Submitting new placement requests.");
+	$placementClient.submitRequests();
+end
+
+rule "No pdps requests"
+salience -1000
+when
+	$placementClient: PlacementClient(getNumberOfPlacementsToRequest() == 0)
+then
+	logger.info("No new placement requests.");
+end

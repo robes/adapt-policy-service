@@ -1,0 +1,6 @@
+# Defines maximum bandwidth (MB) allowed from one host to another
+# <host 1> <host 2> <max bandwidth in MB>
+
+# Examples:
+#server1.isi.edu client1.isi.edu 500
+#server2.isi.edu client2.isi.edu 400.5

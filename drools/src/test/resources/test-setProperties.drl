@@ -1,0 +1,33 @@
+package edu.isi.policy.test;
+
+import edu.isi.policy.entity.Transfer;
+import edu.isi.policy.util.TransferList;
+
+rule "Insert all transfers into working memory"
+salience 1000
+when
+    $transferList:TransferList(size() > 0)
+    $t: Transfer() from $transferList
+then
+    insert($t);
+end
+
+rule "Set priority 10 on jacoby.isi.edu puts"
+when
+    $transferList: TransferList(size() > 0)
+	$transfer: Transfer(destination.getHost() == "jacoby.isi.edu") from $transferList
+then
+    modify($transfer) {
+      setProperty("PRIORITY", "10")
+    }
+end
+
+rule "Set buffer size to 2048 for jacoby.isi.edu to local file puts"
+when
+    $transferList: TransferList(size() > 0)
+    $transfer: Transfer(source.getHost() == "jacoby.isi.edu", destination.getScheme() == "file") from $transferList
+then
+    modify($transfer) {
+      setProperty("BUFFER_SIZE", "2048")
+    }
+end

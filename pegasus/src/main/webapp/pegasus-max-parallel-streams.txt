@@ -1,0 +1,6 @@
+server1.isi.edu client1.isi.edu 10
+server2.isi.edu client2.isi.edu 10
+server3.isi.edu client3.isi.edu 10
+client1.isi.edu server1.isi.edu 10
+client2.isi.edu server2.isi.edu 10
+client3.isi.edu server3.isi.edu 10

@@ -1,0 +1,17 @@
+package edu.isi.policy.test;
+
+import edu.isi.policy.entity.Transfer;
+import edu.isi.policy.util.TransferList;
+
+import org.apache.log4j.Logger;
+
+global Logger logger;
+
+rule "Set arbitrary property on each transfer"
+when
+    $transferList: TransferList(size() > 0)
+    $t: Transfer() from $transferList
+then
+    $t.setProperty("STATUS", "START");
+    logger.info("Set START status on transfer " + $t);
+end
