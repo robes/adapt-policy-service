@@ -13,10 +13,10 @@ dist_adapt: build_adapt
 	cd ${BUILD_DIR} && tar -czf ../${DIST_DIR}/${ADAPT_PACKAGE_NAME}-${VERSION}.tar.gz ${ADAPT_PACKAGE_NAME}
 	
 build_pegasus: prepare
-	mvn install --projects pegasus -DskipTests=true
+	mvn install --projects pegasus -Dmaven.test.skip=true
 
 build_adapt: prepare
-	mvn install --projects adapt -DskipTests=true
+	mvn install --projects adapt -Dmaven.test.skip=true
 	mkdir -p ${BUILD_DIR}/${ADAPT_PACKAGE_NAME}/lib
 	cp -f ${ADAPT_MOD}/target/*.jar ${BUILD_DIR}/${ADAPT_PACKAGE_NAME}/lib
 	#rm -f ${BUILD_DIR}/${ADAPT_PACKAGE_NAME}/lib/junit*.jar

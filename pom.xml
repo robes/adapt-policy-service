@@ -13,6 +13,7 @@
     <module>controller</module>
     <module>adapt</module>
     <module>pegasus</module>
+    <module>adaptws</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
