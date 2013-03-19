@@ -1,8 +1,8 @@
 <%
 // TODO: retrieve these from a properties file
-String serviceName = "IntelliSend Policy Service";
-String version = "0.1.0";
-String prefix = "policy";
+String serviceName = "Policy Placement Service";
+String version = "0.0.3";
+String prefix = request.getContextPath();
 %>
 <html>
 <head>
@@ -32,72 +32,72 @@ String prefix = "policy";
   </tr>
   <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/transfer/&lt;transfer-id&gt;</td>
+    <td><%=prefix%>/transfer/&lt;transfer-id&gt;</td>
     <td>Retrieves the status of an existing transfer in the policy session.</td>
   </tr>
   <tr>
     <td>POST</td>
-    <td>/<%=prefix%>/transfer</td>
+    <td><%=prefix%>/transfer</td>
     <td>Creates a transfer in the policy session.</td>
   </tr>
   <tr>
     <td>PUT</td>
-    <td>/<%=prefix%>/transfer/&lt;transfer-id&gt;</td>
+    <td><%=prefix%>/transfer/&lt;transfer-id&gt;</td>
     <td>Updates an existing transfer in the policy session.</td>
   </tr>
   <tr>
     <td>DELETE</td>
-    <td>/<%=prefix%>/transfer/&lt;transfer-id&gt;</td>
+    <td><%=prefix%>/transfer/&lt;transfer-id&gt;</td>
     <td>Deletes an existing transfer from the policy session.</td>
   </tr>
   <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/transfer/list</td>
+    <td><%=prefix%>/transfer/list</td>
     <td>Retrieves a list of transfers in the policy session.</td>
   </tr>
   <tr>
     <td>POST</td>
-    <td>/<%=prefix%>/transfer/list</td>
+    <td><%=prefix%>/transfer/list</td>
     <td>Creates a list of transfers in the policy session.</td>
   </tr>
   <tr>
     <td>PUT</td>
-    <td>/<%=prefix%>/transfer/list</td>
+    <td><%=prefix%>/transfer/list</td>
     <td>Updates a list of transfers in the policy session.</td>
   </tr>
   <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/resource/list</td>
+    <td><%=prefix%>/resource/list</td>
     <td>Retrieves the list of resources in the policy session.</td>
   </tr>
   <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/cleanup/list</td>
+    <td><%=prefix%>/cleanup/list</td>
     <td>Retrieves the list of cleanups in the policy session.</td>
   </tr>
   <tr>
     <td>POST</td>
-    <td>/<%=prefix%>/cleanup/list</td>
+    <td><%=prefix%>/cleanup/list</td>
     <td>Creates a list of cleanups in the policy session.</td>
   </tr>
   <tr>
     <td>PUT</td>
-    <td>/<%=prefix%>/cleanup/list</td>
+    <td><%=prefix%>/cleanup/list</td>
     <td>Updates a list of existing cleanups in the policy session.</td>
   </tr>
     <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/cleanup/&lt;cleanup-ud&gt;</td>
+    <td><%=prefix%>/cleanup/&lt;cleanup-ud&gt;</td>
     <td>Retrieves an existing cleanup from the policy session.</td>
   </tr>
   <tr>
     <td>PUT</td>
-    <td>/<%=prefix%>/cleanup/&lt;cleanup-id&gt;</td>
+    <td><%=prefix%>/cleanup/&lt;cleanup-id&gt;</td>
     <td>Updates an existing cleanup in the policy session.</td>
   </tr>
   <tr>
     <td>GET</td>
-    <td>/<%=prefix%>/global/&lt;variableName&gt;</td>
+    <td><%=prefix%>/global/&lt;variableName&gt;</td>
     <td>Retrieves a global variable object from the policy session.</td>
   </tr>
 </table>
