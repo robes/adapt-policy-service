@@ -29,7 +29,7 @@ import edu.isi.policy.util.ResourceExpressionPairIntegerMap;
  */
 public class PolicyModule extends PolicyServiceImpl {
 
-    private static final String DEFAULT_PROPERTIES_FILE = "/policymodule.properties";
+    private static final String DEFAULT_PROPERTIES_FILE = "policymodule.properties";
 
     private final Map<String, Object> globalVariables;
     private static final Logger LOG = Logger.getLogger(PolicyModule.class);
@@ -51,7 +51,15 @@ public class PolicyModule extends PolicyServiceImpl {
      * Default constructor. Loads with the default properties.
      */
     public PolicyModule() throws IOException {
-        this(PolicyModule.class.getResource(DEFAULT_PROPERTIES_FILE).getFile());
+        //OLD: this(PolicyModule.class.getResource(DEFAULT_PROPERTIES_FILE).getFile());
+        InputStream in = PolicyModule.class.getClassLoader().getResourceAsStream(DEFAULT_PROPERTIES_FILE);
+        if (in == null) {
+            throw new IOException("Could not load resource " + DEFAULT_PROPERTIES_FILE);
+        }
+        Properties properties = new Properties();
+        properties.load(in);
+        globalVariables = new HashMap<String, Object>();
+        createPolicySession(properties);
     }
 
     /**
