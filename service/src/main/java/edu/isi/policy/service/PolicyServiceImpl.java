@@ -25,6 +25,7 @@ import edu.isi.policy.util.TransferList;
 public class PolicyServiceImpl implements PolicyService {
 
     private PolicySession policySession;
+    private final Object lock = new Object();
 
     @Override
     public TransferList addTransfers(final TransferList transfers) {
@@ -36,7 +37,9 @@ public class PolicyServiceImpl implements PolicyService {
                 t.setId(IdentityGenerator.generateId());
             }
         }
-        policySession.evaluateNewEntity(transfers);
+        synchronized (this.lock) {
+            policySession.evaluateNewEntity(transfers);
+        }
         return transfers;
     }
 
@@ -46,15 +49,19 @@ public class PolicyServiceImpl implements PolicyService {
         if (transferId == null || transferId.length() == 0) {
             throw new IllegalArgumentException("Transfer ID must be specified.");
         }
-        final Transfer transfer = (Transfer) policySession
-                .removeEntity(transferId);
-        return transfer;
+        synchronized (this.lock) {
+            final Transfer transfer = (Transfer) policySession
+                    .removeEntity(transferId);
+            return transfer;
+        }
     }
 
     @Override
     public TransferList getTransfers() {
-        final Collection<Object> objs = policySession
-                .getAllObjectInstances(Transfer.class);
+        final Collection<Object> objs;
+        synchronized (this.lock) {
+            objs = policySession.getAllObjectInstances(Transfer.class);
+        }
         final TransferList l = new TransferList(objs.size());
         for (Object obj : objs) {
             l.add((Transfer) obj);
@@ -68,7 +75,9 @@ public class PolicyServiceImpl implements PolicyService {
         if (transferId == null || transferId.length() == 0) {
             throw new IllegalArgumentException("Transfer ID must be specified.");
         }
-        return (Transfer) policySession.getEntity(transferId);
+        synchronized (this.lock) {
+            return (Transfer) policySession.getEntity(transferId);
+        }
     }
 
     @Override
@@ -77,7 +86,9 @@ public class PolicyServiceImpl implements PolicyService {
         if (cleanupId == null || cleanupId.length() == 0) {
             throw new IllegalArgumentException("Cleanup ID must be specified.");
         }
-        return (Cleanup) policySession.getEntity(cleanupId);
+        synchronized (this.lock) {
+            return (Cleanup) policySession.getEntity(cleanupId);
+        }
     }
 
     @Override
