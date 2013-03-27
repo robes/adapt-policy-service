@@ -6,6 +6,9 @@ ADAPT_PACKAGE_NAME=policy-adapt
 DIST_DIR=dist
 BUILD_DIR=build
 
+all:
+	mvn install -Dmaven.test.skip=true
+
 dist_pegasus: build_pegasus
 	cd ${PEGASUS_MOD}/target && tar -czf ../../${DIST_DIR}/${PEGASUS_PACKAGE_NAME}-${VERSION}.tar.gz ${PEGASUS_PACKAGE_NAME}-${VERSION}.war
 
