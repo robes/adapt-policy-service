@@ -33,10 +33,11 @@ import edu.isi.policy.util.TransferList;
 public class PolicyController {
 
     private static final Logger LOG = Logger.getLogger(PolicyController.class);
+    private final Object policyLock = new Object();
 
     @Autowired
     private PolicyService policyService;
-
+    
     /**
      * 
      * @return the policy service
@@ -71,7 +72,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: GET /transfer/list");
         }
-        final TransferList transfers = policyService.getTransfers();
+        final TransferList transfers;
+        synchronized (this.policyLock) {
+            transfers = policyService.getTransfers();
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: GET /transfer/list; transfers=" + transfers);
         }
@@ -90,7 +94,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: POST /transfer/list; transfers=" + transfers);
         }
-        final TransferList result = policyService.addTransfers(transfers);
+        final TransferList result;
+        synchronized (this.policyLock) {
+            result = policyService.addTransfers(transfers);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: POST /transfer/list; transfers=" + result);
         }
@@ -110,7 +117,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: PUT /transfer/list; transfers=" + transfers);
         }
-        final TransferList result = policyService.updateTransfers(transfers);
+        final TransferList result;
+        synchronized (this.policyLock) {
+            result = policyService.updateTransfers(transfers);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: PUT /transfer/list; transfers=" + result);
         }
@@ -129,7 +139,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: POST /transfer; transfer=" + transfer);
         }
-        final Transfer result = policyService.addTransfer(transfer);
+        final Transfer result;
+        synchronized (this.policyLock) {
+            result = policyService.addTransfer(transfer);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: POST /transfer; transfer=" + result);
         }
@@ -149,7 +162,9 @@ public class PolicyController {
             LOG.debug("In: DELETE /transfer/" + transferId);
         }
         try {
-            policyService.removeTransfer(transferId);
+            synchronized (this.policyLock) {
+                policyService.removeTransfer(transferId);
+            }
         } catch (EntityNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -174,7 +189,9 @@ public class PolicyController {
         }
         Transfer result = null;
         try {
-            result = policyService.getTransfer(transferId);
+            synchronized (this.policyLock) {
+                result = policyService.getTransfer(transferId);
+            }
         } catch (EntityNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -205,8 +222,10 @@ public class PolicyController {
         }
         Transfer result = null;
         try {
-            policyService.updateTransfer(transferId,
-                    newTransfer);
+            synchronized (this.policyLock) {
+                policyService.updateTransfer(transferId,newTransfer);
+                result = policyService.getTransfer(transferId);
+            }
         } catch (EntityNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -225,7 +244,9 @@ public class PolicyController {
     @RequestMapping(value = "/resource/list", method = RequestMethod.GET)
     public @ResponseBody
     List<Resource> getResources() {
-        return policyService.getResources();
+        synchronized (this.policyLock) {
+            return policyService.getResources();
+        }
     }
 
     /**
@@ -238,7 +259,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: GET /cleanup/list");
         }
-        final CleanupList cleanups = policyService.getCleanups();
+        final CleanupList cleanups;
+        synchronized (this.policyLock) {
+            cleanups = policyService.getCleanups();
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: GET /cleanup/list; cleanups=" + cleanups);
         }
@@ -253,7 +277,9 @@ public class PolicyController {
         }
         Cleanup cleanup = null;
         try {
-            cleanup = policyService.getCleanup(cleanupId);
+            synchronized (this.policyLock) {
+                cleanup = policyService.getCleanup(cleanupId);
+            }
         } catch (EntityNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -277,7 +303,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: POST /cleanup; cleanup=" + cleanup);
         }
-        final Cleanup result = policyService.addCleanup(cleanup);
+        final Cleanup result;
+        synchronized (this.policyLock) {
+            result = policyService.addCleanup(cleanup);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: POST /cleanup; cleanup=" + result);
         }
@@ -299,7 +328,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: POST /cleanup/list; cleanups=" + resourceCleanups);
         }
-        final CleanupList result = policyService.addCleanups(resourceCleanups);
+        final CleanupList result;
+        synchronized (this.policyLock) {
+            result = policyService.addCleanups(resourceCleanups);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: POST /cleanup/list; cleanups=" + result);
         }
@@ -319,7 +351,10 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: PUT /cleanup/list; cleanups=" + cleanups);
         }
-        final CleanupList result = policyService.updateCleanups(cleanups);
+        final CleanupList result;
+        synchronized (this.policyLock) {
+            result = policyService.updateCleanups(cleanups);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: PUT /cleanup/list; cleanups=" + result);
         }
@@ -344,7 +379,9 @@ public class PolicyController {
         }
         Cleanup result = null;
         try {
-            policyService.updateCleanup(cleanupId, cleanup);
+            synchronized (this.policyLock) {
+                policyService.updateCleanup(cleanupId, cleanup);
+            }
         } catch (EntityNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -367,7 +404,9 @@ public class PolicyController {
         }
         Object result = null;
         try {
-            result = policyService.getGlobalVariable(variableName);
+            synchronized (this.policyLock) {
+                result = policyService.getGlobalVariable(variableName);
+            }
         } catch (GlobalVariableNotFoundException e) {
             LOG.warn(e);
             throw new HTTPException(HttpServletResponse.SC_NOT_FOUND);
@@ -384,7 +423,9 @@ public class PolicyController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("In: PUT /global/" + variableName + "; value=" + value);
         }
-        policyService.setGlobalVariable(variableName, value);
+        synchronized (this.policyLock) {
+            policyService.setGlobalVariable(variableName, value);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Out: PUT /global/" + variableName + "; value=" + value);
         }
