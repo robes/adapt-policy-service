@@ -1,8 +1,11 @@
 #!/bin/sh
 
-ID=$1
-JSON="{\"id\":\"${ID}\",\"properties\":{\"adjusted_streams\":\"3\"},\"source\":\"http://localhost:8080/abc\",\"destination\":\"http://localhost/xyz\"}"
+BASEURL="http://localhost:8080"
+HEADER="Content-Type: application/json"
 
-curl --request PUT --data ${JSON} --header "Content-Type: application/json" http://localhost:8080/policy-adaptws-0.0.3/transfer/${ID}
+ID=$1
+JSON="{\"id\":\"${ID}\",\"properties\":{\"adjusted_streams\":\"3\"},\"source\":\"http://localhost:8080/abc\",\"destination\":\"http://localhost:8080/xyz\"}"
+
+curl --request PUT --data ${JSON} --header "${HEADER}" "${BASEURL}/transfer/${ID}"
 
 echo
