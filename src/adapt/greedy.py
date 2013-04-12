@@ -14,6 +14,10 @@ class Greedy:
     def __init__(self):
         self.lock = threading.Lock()
         self.transfers = []
+        self.allocations = {}
+        self.max_streams = 32
+        self.default_streams = 8
+        self.min_streams = 0
     
     def all(self):
         with self.lock:
@@ -25,6 +29,27 @@ class Greedy:
             web.debug("add: " + str(transfer))
             transfer["id"] = len(self.transfers)
             self.transfers.append(transfer)
+            
+            if transfer['source'] in self.allocations:
+                srcalloc = self.allocations[transfer.source]
+                if transfer.destination in srcalloc:
+                    available = srcalloc[transfer.destination]
+                    if available > self.default_streams:
+                        srcalloc[transfer.destination] = available - self.default_streams
+                        transfer.streams = self.default_streams
+                    elif available == 0:
+                        transfer.streams = self.min_streams
+                    else:
+                        srcalloc[transfer.destination] = 0
+                        transfer.streams = available
+                else:
+                    srcalloc[transfer.destination] = self.max_streams - self.default_streams
+                    transfer.streams = self.default_streams
+            else:
+                transfer['streams'] = self.default_streams
+                srcalloc = {transfer['destination']: self.max_streams - self.default_streams}
+                self.allocations[transfer['source']] = srcalloc
+            
             return copy.deepcopy(transfer)
     
     def get(self, id):
