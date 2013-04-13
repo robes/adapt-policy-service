@@ -9,7 +9,7 @@ But at this moment you need to supply web.py, which can be done either by:
 
 Limitations:
 * It keeps state in memory only
-* It only supports steam allocations, but not rate allocations
+* It only supports stream allocations, but not rate allocations
 * The restful interface has changed a bit from the previous java version, but I think this is a simplification 
 * It probably doesn't work exactly like it used to
 * It probably doesn't work exactly like it is supported to (!) and needs fixing based on feedback
