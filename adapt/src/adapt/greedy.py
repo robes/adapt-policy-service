@@ -6,78 +6,132 @@ Created on Apr 11, 2013
 import web
 import json
 import threading
-import copy
+from copy import deepcopy
+from urlparse import urlparse
+
+MAX_STREAMS     = 36 # Max streams per-pairwise endpoints
+DEFAULT_STREAMS = 8  # Default streams allocated per new request
+MIN_STREAMS     = 0  # Minimum streams allocated when over-allocated
 
 class Greedy:
     '''The greedy policy manager.'''
     
     def __init__(self):
         self.lock = threading.Lock()
-        self.transfers = []
+        self.next_transfer_id = 0L
+        self.transfers = {}
         self.allocations = {}
-        self.max_streams = 32
-        self.default_streams = 8
-        self.min_streams = 0
+        self.max_streams = MAX_STREAMS
+        self.default_streams = DEFAULT_STREAMS
+        self.min_streams = MIN_STREAMS
+    
+    
+    def dump(self):
+        return (self.transfers, self.allocations)
+    
+    
+    def make_allocation_key(self, transfer):
+        # Create the key out of the src::dst hostnames
+        srchost = urlparse(transfer.source).hostname
+        dsthost = urlparse(transfer.destination).hostname
+        return srchost + "::" + dsthost
+    
     
     def all(self):
         with self.lock:
             web.debug("all")
-            return copy.deepcopy(self.transfers)
+            return deepcopy(self.transfers)
+    
     
     def add(self, transfer):
         with self.lock:
             web.debug("add: " + str(transfer))
-            transfer["id"] = len(self.transfers)
-            self.transfers.append(transfer)
+            key = self.make_allocation_key(transfer)
             
-            if transfer['source'] in self.allocations:
-                srcalloc = self.allocations[transfer.source]
-                if transfer.destination in srcalloc:
-                    available = srcalloc[transfer.destination]
-                    if available > self.default_streams:
-                        srcalloc[transfer.destination] = available - self.default_streams
-                        transfer.streams = self.default_streams
-                    elif available == 0:
-                        transfer.streams = self.min_streams
-                    else:
-                        srcalloc[transfer.destination] = 0
-                        transfer.streams = available
-                else:
-                    srcalloc[transfer.destination] = self.max_streams - self.default_streams
+            # Add transfer to collection and increment counter
+            transfer.id = self.next_transfer_id
+            self.transfers[self.next_transfer_id] = transfer
+            self.next_transfer_id += 1L
+            
+            # Allocate as many streams as possible up to the default
+            if key in self.allocations:
+                available = self.allocations[key]
+                if available >= self.default_streams:
                     transfer.streams = self.default_streams
+                    self.allocations[key] -= self.default_streams
+                elif available == 0:
+                    transfer.streams = self.min_streams
+                else:
+                    transfer.streams = available
+                    self.allocations[key] = 0
             else:
-                transfer['streams'] = self.default_streams
-                srcalloc = {transfer['destination']: self.max_streams - self.default_streams}
-                self.allocations[transfer['source']] = srcalloc
+                transfer.streams = self.default_streams
+                self.allocations[key] = self.max_streams - self.default_streams
             
-            return copy.deepcopy(transfer)
+            return deepcopy(transfer)
+    
     
     def get(self, id):
         with self.lock:
             web.debug("get: " + str(id))
-            if id < len(self.transfers):
-                return copy.deepcopy(self.transfers[id])
+            if not self.transfers.has_key(id):
+                raise web.NotFound("No such transfer")
             else:
-                return None
+                return deepcopy(self.transfers[id])
     
     def update(self, id, transfer):
         with self.lock:
             web.debug("update: " + str(id) + ": " + str(transfer))
-            if id < len(self.transfers):
-                self.transfers[id] = transfer
-                return copy.deepcopy(transfer)
+            if not self.transfers.has_key(id):
+                raise web.NotFound("No such transfer")
+            if transfer.streams < 0:
+                raise web.BadRequest("Cannot request negative streams")
+            
+            # Make sure the src/dst match the original
+            original = self.transfers[id]
+            if transfer.source != original.source or \
+                transfer.destination != original.destination:
+                raise web.Conflict("Transfer source/destination must not change")
+            
+            # Allocate as many streams as possible up to the default
+            key = self.make_allocation_key(transfer)
+            if key not in self.allocations:
+                raise web.Conflict("Internal error: No allocations for this key")
+            
+            available = self.allocations[key]
+            requested = transfer.streams
+            delta = requested - original.streams
+            
+            if available >= delta:
+                web.debug("Granting %s streams" % delta)
+                original.streams += delta
+                self.allocations[key] -= delta
+            elif available > 0:
+                web.debug("Granting %s streams" % available)
+                original.streams += available
+                self.allocations[key] = 0
             else:
-                return None
+                raise web.BadRequest("No streams available to allocate")
+            
+            return deepcopy(original)
     
     def remove(self, id):
         with self.lock:
             web.debug("remove: " + str(id))
-            if id < len(self.transfers):
-                self.transfers[id] = None
+            if not self.transfers.has_key(id):
+                raise web.NotFound("No such transfer")
+            
+            transfer = self.transfers[id]
+            del self.transfers[id]
+            
+            # "Return" the allocations to the pool
+            key = self.make_allocation_key(transfer)
+            self.allocations[key] += transfer.streams
+            if self.allocations[key] > self.max_streams:
+                self.allocations[key] = self.max_streams
 
 
 class Transfer:
-        
     def GET(self, transferid):
         if not transferid:
             transfers = policy.all()
@@ -106,9 +160,11 @@ class Transfer:
             raise web.BadRequest(msg)
         
         try:
-            d = web.data()
-            transfer = json.loads(d)
-            policy.update(id, transfer)
+            raw = web.data()
+            parsed = json.loads(raw)
+            transfer = web.storify(parsed)
+            transfer = policy.update(id, transfer)
+            return json.dumps(transfer)
         except ValueError as e:
             msg = "Invalid json request body: " + str(e)
             web.debug(msg)
@@ -131,9 +187,10 @@ class Transfer:
 
 class CreateTransfer:
     def POST(self):
-        d = web.data()
+        raw = web.data()
         try:
-            transfer = json.loads(d)
+            parsed = json.loads(raw)
+            transfer = web.storify(parsed)
             transfer = policy.add(transfer)
             return json.dumps(transfer)
         except ValueError as e:
@@ -142,11 +199,23 @@ class CreateTransfer:
             raise web.BadRequest(msg)
 
 
+class Dump:
+    def GET(self):
+        (transfers, allocations) = policy.dump()
+        dump = web.Storage()
+        dump.transfers = transfers
+        dump.allocations = allocations
+        return json.dumps(dump)
+
+
+policy = Greedy()
+
 urls = (
     '/transfer/(.*)', 'Transfer',
-    '/transfer', 'CreateTransfer'
+    '/transfer', 'CreateTransfer',
+    '/dump', 'Dump'
 )
-policy = Greedy()
+
 app = web.application(urls, globals())
 
 
