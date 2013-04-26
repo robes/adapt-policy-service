@@ -31,9 +31,22 @@ class Greedy:
     
     
     def make_allocation_key(self, transfer):
-        # Create the key out of the src::dst hostnames
+        '''Create the key out of the source and destination hostnames.
+        
+        Raises ValueError, if cannot parse hostname from URL.
+        '''
+        if not 'source' in transfer:
+            raise ValueError("No transfer source")
+        if not 'destination' in transfer:
+            raise ValueError("No transfer destination")
+        
         srchost = urlparse(transfer.source).hostname
         dsthost = urlparse(transfer.destination).hostname
+        if srchost is None:
+            raise ValueError("No hostname in URL: " + transfer.source)
+        elif dsthost is None:
+            raise ValueError("No hostname in URL: " + transfer.destination)
+        
         return srchost + "::" + dsthost
     
     
@@ -133,6 +146,13 @@ class Greedy:
 
 class Transfer:
     def POST(self, transferid=None):
+        '''POST /transfer
+        
+        Not allowed to POST /transfer/{ID}.
+        '''
+        if transferid:
+            raise web.NoMethod()
+        
         raw = web.data()
         try:
             parsed = json.loads(raw)
@@ -140,7 +160,7 @@ class Transfer:
             transfer = policy.add(transfer)
             return json.dumps(transfer)
         except ValueError as e:
-            msg = "Invalid json request body: " + str(e)
+            msg = "Bad request body: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
     
@@ -214,6 +234,7 @@ urls = (
     '/dump', 'Dump'
 )
 
+web.config.debug = False
 app = web.application(urls, globals())
 
 
