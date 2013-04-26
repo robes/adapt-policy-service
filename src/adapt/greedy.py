@@ -132,6 +132,18 @@ class Greedy:
 
 
 class Transfer:
+    def POST(self, transferid=None):
+        raw = web.data()
+        try:
+            parsed = json.loads(raw)
+            transfer = web.storify(parsed)
+            transfer = policy.add(transfer)
+            return json.dumps(transfer)
+        except ValueError as e:
+            msg = "Invalid json request body: " + str(e)
+            web.debug(msg)
+            raise web.BadRequest(msg)
+    
     def GET(self, transferid):
         if not transferid:
             transfers = policy.all()
@@ -185,20 +197,6 @@ class Transfer:
             raise web.BadRequest(msg)
 
 
-class CreateTransfer:
-    def POST(self):
-        raw = web.data()
-        try:
-            parsed = json.loads(raw)
-            transfer = web.storify(parsed)
-            transfer = policy.add(transfer)
-            return json.dumps(transfer)
-        except ValueError as e:
-            msg = "Invalid json request body: " + str(e)
-            web.debug(msg)
-            raise web.BadRequest(msg)
-
-
 class Dump:
     def GET(self):
         (transfers, allocations) = policy.dump()
@@ -212,7 +210,7 @@ policy = Greedy()
 
 urls = (
     '/transfer/(.*)', 'Transfer',
-    '/transfer', 'CreateTransfer',
+    '/transfer', 'Transfer',
     '/dump', 'Dump'
 )
 
