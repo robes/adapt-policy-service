@@ -51,12 +51,20 @@ class Greedy:
     
     
     def all(self):
+        '''Returns a dictionary of all transfer resources, keyed on transfer id.'''
         with self.lock:
             web.debug("all")
             return deepcopy(self.transfers)
     
     
     def add(self, transfer):
+        '''Adds a transfer resource to the greedly policy manager.
+        
+        Allocates the default streams, if available, the balance if not, 
+        and the minimum if below threshold.
+        
+        A 'transfer' dictionary is expected.
+        '''
         with self.lock:
             web.debug("add: " + str(transfer))
             key = self.make_allocation_key(transfer)
@@ -85,18 +93,26 @@ class Greedy:
     
     
     def get(self, id):
+        '''Returns a transfer dictionary.
+        
+        A valid integer 'id' is expected.
+        '''
         with self.lock:
-            web.debug("get: " + str(id))
             if not self.transfers.has_key(id):
-                raise web.NotFound("No such transfer")
+                raise web.NotFound("Transfer (id="+str(id)+") not found")
             else:
                 return deepcopy(self.transfers[id])
     
     def update(self, id, transfer):
+        '''Updates a transfer and returns the current state of it.
+        
+        A valid integer 'id' is expected.
+        
+        A valid 'transfer' dictionary is expected.
+        '''
         with self.lock:
-            web.debug("update: " + str(id) + ": " + str(transfer))
             if not self.transfers.has_key(id):
-                raise web.NotFound("No such transfer")
+                raise web.NotFound("Transfer (id="+str(id)+") not found")
             if transfer.streams < 0:
                 raise web.BadRequest("Cannot request negative streams")
             
@@ -109,7 +125,7 @@ class Greedy:
             # Allocate as many streams as possible up to the default
             key = self.make_allocation_key(transfer)
             if key not in self.allocations:
-                raise web.Conflict("Internal error: No allocations for this key")
+                raise web.Conflict("No allocation record for these endpoints (key="+key+")")
             
             available = self.allocations[key]
             requested = transfer.streams
@@ -124,15 +140,18 @@ class Greedy:
                 original.streams += available
                 self.allocations[key] = 0
             else:
-                raise web.BadRequest("No streams available to allocate")
+                web.debug("No streams available to allocate")
             
             return deepcopy(original)
     
     def remove(self, id):
+        '''Removes a transfer and frees up allocated resources.
+        
+        A valid integer 'id' is expected.
+        '''
         with self.lock:
-            web.debug("remove: " + str(id))
             if not self.transfers.has_key(id):
-                raise web.NotFound("No such transfer")
+                raise web.NotFound("Transfer (id="+str(id)+") not found")
             
             transfer = self.transfers[id]
             del self.transfers[id]
@@ -165,6 +184,10 @@ class Transfer:
             raise web.BadRequest(msg)
     
     def GET(self, transferid):
+        ''' GET /transfer/[ID]
+        
+        Returns all or one transfer representation.
+        '''
         if not transferid:
             transfers = policy.all()
             return json.dumps(transfers)
@@ -179,6 +202,10 @@ class Transfer:
             raise web.BadRequest(msg)
         
     def PUT(self, transferid):
+        ''' PUT /transfer/{ID}
+        
+        Updates one transfer.
+        '''
         if not transferid:
             msg = "No transfer id"
             web.debug(msg)
@@ -203,6 +230,10 @@ class Transfer:
             raise web.BadRequest(msg)
         
     def DELETE(self, transferid):
+        ''' DELETE /transfer/{ID}
+        
+        Deletes one transfer resource.
+        '''
         if not transferid:
             msg = "No transfer id"
             web.debug(msg)
@@ -219,6 +250,10 @@ class Transfer:
 
 class Dump:
     def GET(self):
+        ''' GET /dump
+        
+        Dumps the state of the policy module. For debug purpose only.
+        '''
         (transfers, allocations) = policy.dump()
         dump = web.Storage()
         dump.transfers = transfers
