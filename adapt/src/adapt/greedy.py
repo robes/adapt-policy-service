@@ -89,6 +89,11 @@ class Greedy:
                 transfer.streams = self.default_streams
                 self.allocations[key] = self.max_streams - self.default_streams
             
+            if transfer.streams == self.default_streams:
+                transfer.threshold = True
+            else:
+                transfer.threshold = False
+
             return deepcopy(transfer)
     
     
@@ -113,7 +118,9 @@ class Greedy:
         with self.lock:
             if not self.transfers.has_key(id):
                 raise web.NotFound("Transfer (id="+str(id)+") not found")
-            if transfer.streams < 0:
+            if not 'streams' in transfer:
+                transfer.streams = self.default_streams
+            elif transfer.streams < 0:
                 raise web.BadRequest("Cannot request negative streams")
             
             # Make sure the src/dst match the original
@@ -141,6 +148,11 @@ class Greedy:
                 self.allocations[key] = 0
             else:
                 web.debug("No streams available to allocate")
+            
+            if original.streams == self.default_streams:
+                original.threshold = True
+            else:
+                original.threshold = False
             
             return deepcopy(original)
     
