@@ -113,15 +113,16 @@ class Greedy:
         
         A valid integer 'id' is expected.
         
-        A valid 'transfer' dictionary is expected.
+        A valid 'transfer' dictionary is expected. If streams > 0, the policy
+        module will attempt to allocate min(transfer.streams, available streams).
+        If streams < 0 or not specified, the policy module will attempt to allocate
+        min(default streams, available streams).
         '''
         with self.lock:
             if not self.transfers.has_key(id):
                 raise web.NotFound("Transfer (id="+str(id)+") not found")
-            if not 'streams' in transfer:
+            if not 'streams' in transfer or transfer.streams < 0:
                 transfer.streams = self.default_streams
-            elif transfer.streams < 0:
-                raise web.BadRequest("Cannot request negative streams")
             
             # Make sure the src/dst match the original
             original = self.transfers[id]
