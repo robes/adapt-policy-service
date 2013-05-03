@@ -7,6 +7,7 @@ import web
 import json
 from policy import MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
 from greedy import Greedy
+from config import policy
 
 __all__ = ["Transfer", "Dump"]
 
@@ -120,7 +121,7 @@ class Dump:
         return json.dumps(dump)
 
 
-policy = Greedy()
+#policy = Greedy()
 
 urls = (
     '/transfer/(.*)', 'Transfer',
@@ -133,4 +134,8 @@ app = web.application(urls, globals())
 
 
 if __name__ == "__main__":
+    #TODO: get arguments from cmdline, then set adapt.config.policy (and
+    #  future system-wide config parameters) then continue
+    policy = Greedy()
+    
     app.run()
