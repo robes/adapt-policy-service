@@ -12,6 +12,8 @@ from config import policy
 __all__ = ["Transfer", "Dump"]
 
 class Transfer:
+    '''RESTful web handler for Transfer resources.'''
+    
     def POST(self, transferId=None):
         '''POST /transfer
         
@@ -109,6 +111,8 @@ class Transfer:
 
 
 class Dump:
+    '''Diagnostics for Transfer service.'''
+    
     def GET(self):
         ''' GET /dump
         
@@ -121,14 +125,11 @@ class Dump:
         return json.dumps(dump)
 
 
-#policy = Greedy()
-
 urls = (
     '/transfer/(.*)', 'Transfer',
     '/transfer', 'Transfer',
     '/dump', 'Dump'
 )
-
 web.config.debug = False
 app = web.application(urls, globals())
 
