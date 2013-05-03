@@ -4,6 +4,9 @@ Created on May 3, 2013
 @author: schuler
 '''
 
+__all__ = ["Policy", "PolicyException", "MalformedTransfer",
+            "TransferNotFound", "NotAllowed", "PolicyError"]
+
 class PolicyException(Exception):
     '''Base exception class should not be used directly.'''
     def __init__(self, msg):
