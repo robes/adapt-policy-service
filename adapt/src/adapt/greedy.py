@@ -97,21 +97,21 @@ class Greedy:
             return deepcopy(transfer)
     
     
-    def get(self, id):
+    def get(self, transferId):
         '''Returns a transfer dictionary.
         
-        A valid integer 'id' is expected.
+        A valid integer 'transferId' is expected.
         '''
         with self.lock:
-            if not self.transfers.has_key(id):
-                raise web.NotFound("Transfer (id="+str(id)+") not found")
+            if not self.transfers.has_key(transferId):
+                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
             else:
-                return deepcopy(self.transfers[id])
+                return deepcopy(self.transfers[transferId])
     
-    def update(self, id, transfer):
+    def update(self, transferId, transfer):
         '''Updates a transfer and returns the current state of it.
         
-        A valid integer 'id' is expected.
+        A valid integer 'transferId' is expected.
         
         A valid 'transfer' dictionary is expected. If streams > 0, the policy
         module will attempt to allocate min(transfer.streams, available streams).
@@ -119,13 +119,13 @@ class Greedy:
         min(default streams, available streams).
         '''
         with self.lock:
-            if not self.transfers.has_key(id):
-                raise web.NotFound("Transfer (id="+str(id)+") not found")
+            if not self.transfers.has_key(transferId):
+                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
             if not 'streams' in transfer or transfer.streams < 0:
                 transfer.streams = self.default_streams
             
             # Make sure the src/dst match the original
-            original = self.transfers[id]
+            original = self.transfers[transferId]
             if transfer.source != original.source or \
                 transfer.destination != original.destination:
                 raise web.Conflict("Transfer source/destination must not change")
@@ -157,17 +157,17 @@ class Greedy:
             
             return deepcopy(original)
     
-    def remove(self, id):
+    def remove(self, transferId):
         '''Removes a transfer and frees up allocated resources.
         
-        A valid integer 'id' is expected.
+        A valid integer 'transferId' is expected.
         '''
         with self.lock:
-            if not self.transfers.has_key(id):
-                raise web.NotFound("Transfer (id="+str(id)+") not found")
+            if not self.transfers.has_key(transferId):
+                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
             
-            transfer = self.transfers[id]
-            del self.transfers[id]
+            transfer = self.transfers[transferId]
+            del self.transfers[transferId]
             
             # "Return" the resources to the pool
             key = self.make_resources_key(transfer)
@@ -177,12 +177,12 @@ class Greedy:
 
 
 class Transfer:
-    def POST(self, transferid=None):
+    def POST(self, transferId=None):
         '''POST /transfer
         
         Not allowed to POST /transfer/{ID}.
         '''
-        if transferid:
+        if transferId:
             raise web.NoMethod()
         
         raw = web.data()
@@ -196,36 +196,36 @@ class Transfer:
             web.debug(msg)
             raise web.BadRequest(msg)
     
-    def GET(self, transferid):
+    def GET(self, transferId):
         ''' GET /transfer/[ID]
         
         Returns all or one transfer representation.
         '''
-        if not transferid:
+        if not transferId:
             transfers = policy.all()
             return json.dumps(transfers)
         
         try:
-            id = int(transferid)
-            transfer = policy.get(id)
+            transferId = int(transferId)
+            transfer = policy.get(transferId)
             return json.dumps(transfer)
         except ValueError as e:
             msg = "Not a valid transfer id: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
         
-    def PUT(self, transferid):
+    def PUT(self, transferId):
         ''' PUT /transfer/{ID}
         
         Updates one transfer.
         '''
-        if not transferid:
+        if not transferId:
             msg = "No transfer id"
             web.debug(msg)
             raise web.BadRequest(msg)
         
         try:
-            id = int(transferid)
+            transferId = int(transferId)
         except ValueError as e:
             msg = "Not a valid transfer id: " + str(e)
             web.debug(msg)
@@ -235,26 +235,26 @@ class Transfer:
             raw = web.data()
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
-            transfer = policy.update(id, transfer)
+            transfer = policy.update(transferId, transfer)
             return json.dumps(transfer)
         except ValueError as e:
             msg = "Invalid json request body: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
         
-    def DELETE(self, transferid):
+    def DELETE(self, transferId):
         ''' DELETE /transfer/{ID}
         
         Deletes one transfer resource.
         '''
-        if not transferid:
+        if not transferId:
             msg = "No transfer id"
             web.debug(msg)
             raise web.BadRequest(msg)
         
         try:
-            id = int(transferid)
-            policy.remove(id)
+            transferId = int(transferId)
+            policy.remove(transferId)
         except ValueError as e:
             msg = "Not a valid transfer id: " + str(e)
             web.debug(msg)
