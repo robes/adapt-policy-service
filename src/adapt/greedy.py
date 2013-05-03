@@ -8,12 +8,13 @@ import json
 import threading
 from copy import deepcopy
 from urlparse import urlparse
+from policy import Policy, MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
 
 MAX_STREAMS     = 36 # Max streams per-pairwise endpoints
 DEFAULT_STREAMS = 8  # Default streams allocated per new request
 MIN_STREAMS     = 0  # Minimum streams allocated when over-allocated
 
-class Greedy:
+class Greedy(Policy):
     '''The greedy policy manager.'''
     
     def __init__(self):
@@ -36,16 +37,16 @@ class Greedy:
         Raises ValueError, if cannot parse hostname from URL.
         '''
         if not 'source' in transfer:
-            raise ValueError("No transfer source")
+            raise MalformedTransfer("No transfer source")
         if not 'destination' in transfer:
-            raise ValueError("No transfer destination")
+            raise MalformedTransfer("No transfer destination")
         
         srchost = urlparse(transfer.source).hostname
         dsthost = urlparse(transfer.destination).hostname
         if srchost is None:
-            raise ValueError("No hostname in URL: " + transfer.source)
+            raise MalformedTransfer("No hostname in URL: " + transfer.source)
         elif dsthost is None:
-            raise ValueError("No hostname in URL: " + transfer.destination)
+            raise MalformedTransfer("No hostname in URL: " + transfer.destination)
         
         return srchost + "::" + dsthost
     
@@ -104,7 +105,7 @@ class Greedy:
         '''
         with self.lock:
             if not self.transfers.has_key(transferId):
-                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
+                raise TransferNotFound()
             else:
                 return deepcopy(self.transfers[transferId])
     
@@ -120,7 +121,7 @@ class Greedy:
         '''
         with self.lock:
             if not self.transfers.has_key(transferId):
-                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
+                raise TransferNotFound()
             if not 'streams' in transfer or transfer.streams < 0:
                 transfer.streams = self.default_streams
             
@@ -128,12 +129,12 @@ class Greedy:
             original = self.transfers[transferId]
             if transfer.source != original.source or \
                 transfer.destination != original.destination:
-                raise web.Conflict("Transfer source/destination must not change")
+                raise NotAllowed("Cannot change source or destination endpoitns during an update")
             
             # Allocate as many streams as possible up to the default
             key = self.make_resources_key(transfer)
             if key not in self.resources:
-                raise web.Conflict("No allocation record for these endpoints (key="+key+")")
+                raise PolicyError("No allocation record for these endpoints (key="+key+")")
             
             available = self.resources[key]
             requested = transfer.streams
@@ -164,7 +165,7 @@ class Greedy:
         '''
         with self.lock:
             if not self.transfers.has_key(transferId):
-                raise web.NotFound("Transfer (id="+str(transferId)+") not found")
+                raise TransferNotFound()
             
             transfer = self.transfers[transferId]
             del self.transfers[transferId]
@@ -191,8 +192,8 @@ class Transfer:
             transfer = web.storify(parsed)
             transfer = policy.add(transfer)
             return json.dumps(transfer)
-        except ValueError as e:
-            msg = "Bad request body: " + str(e)
+        except MalformedTransfer as e:
+            msg = "Bad request body in POST to transfer/ resource: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
     
@@ -209,8 +210,8 @@ class Transfer:
             transferId = int(transferId)
             transfer = policy.get(transferId)
             return json.dumps(transfer)
-        except ValueError as e:
-            msg = "Not a valid transfer id: " + str(e)
+        except TransferNotFound:
+            msg = "Cannot GET transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
             raise web.BadRequest(msg)
         
@@ -220,14 +221,14 @@ class Transfer:
         Updates one transfer.
         '''
         if not transferId:
-            msg = "No transfer id"
+            msg = "Cannot PUT to the transfer resource without specifying a valid transfer resource ID in the path transfer/{ID}"
             web.debug(msg)
             raise web.BadRequest(msg)
         
         try:
             transferId = int(transferId)
         except ValueError as e:
-            msg = "Not a valid transfer id: " + str(e)
+            msg = "Invalid transfer id: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
         
@@ -237,10 +238,22 @@ class Transfer:
             transfer = web.storify(parsed)
             transfer = policy.update(transferId, transfer)
             return json.dumps(transfer)
-        except ValueError as e:
-            msg = "Invalid json request body: " + str(e)
+        except TransferNotFound:
+            msg = "Cannot PUT to transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
             raise web.BadRequest(msg)
+        except MalformedTransfer as e:
+            msg = "Bad request body in PUT to transfer/ resource: " + str(e)
+            web.debug(msg)
+            raise web.BadRequest(msg)
+        except NotAllowed as e:
+            msg = "Bad request body in PUT to transfer/ resource: " + str(e)
+            web.debug(msg)
+            raise web.BadRequest(msg)
+        except PolicyError as e:
+            msg = "Internal server error: " + str(e)
+            web.debug(msg)
+            raise web.InternalError(msg)
         
     def DELETE(self, transferId):
         ''' DELETE /transfer/{ID}
@@ -248,15 +261,15 @@ class Transfer:
         Deletes one transfer resource.
         '''
         if not transferId:
-            msg = "No transfer id"
+            msg = "Cannot DELETE the transfer resource without specifying a valid transfer resource ID in the path transfer/{ID}"
             web.debug(msg)
             raise web.BadRequest(msg)
         
         try:
             transferId = int(transferId)
             policy.remove(transferId)
-        except ValueError as e:
-            msg = "Not a valid transfer id: " + str(e)
+        except TransferNotFound:
+            msg = "Cannot DELETE transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
             raise web.BadRequest(msg)
 
