@@ -5,8 +5,6 @@ INTRODUCTION
 
 Here is a start at a new lightweight policy service. I attempted to conform to the previous RESTful interface as much as possible, or as much as seemed reasonable. This is a prototype that will improve. It is written in python using the web.py framework, which is one of the lightest web frameworks out there.
 
-The whole service fits in one python file, greedy.py, of about 220+ lines of code (counting white spaces).
-
 INTERFACE
 
 RESTful methods to the policy service.
@@ -60,21 +58,17 @@ LIMITATIONS
 
 * It keeps state in memory only
 * It only supports stream allocations, but not rate allocations
-* The restful interface has changed a bit from the previous java version, but I think this is a simplification 
-* It probably doesn't work exactly like it used to
-* It probably doesn't work exactly like it is supported to (!) and needs fixing based on feedback
+* Configuration is a hack
 
 CONFIGURATION
 
-* The only configuration parameters are some global variables at the top of the greedy.py file.
-* MAX_STREAMS = the maximum streams to allocate per-pairwise hosts
-* MIN_STREAMS = the minimum streams to allocate once the allocations are all given out
-* DEFAULT_STREAMS = the default streams to give to a new request, if available
+* Right now, the way to configure the service is to (a) first see adapt.greedy.Greedy.__init__() to understand the three parameters that affect the Greedy policy, then (b) edit adapt.service.__main__() to initialize the Greedy() policy manager as desired.
 
 RUNNING
 
 Once you have web.py installed, you can:
-* run the service by entering: python greedy.py
+* add the 'adapt' module to your PYTHONPATH
+* run the service by entering: python service.py
 * stop it by hitting: ^C
 
 TESTING
