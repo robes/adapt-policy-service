@@ -30,7 +30,7 @@ class Greedy:
         return (self.transfers, self.resources)
     
     
-    def make_allocation_key(self, transfer):
+    def make_resources_key(self, transfer):
         '''Create the key out of the source and destination hostnames.
         
         Raises ValueError, if cannot parse hostname from URL.
@@ -67,7 +67,7 @@ class Greedy:
         '''
         with self.lock:
             web.debug("add: " + str(transfer))
-            key = self.make_allocation_key(transfer)
+            key = self.make_resources_key(transfer)
             
             # Add transfer to collection and increment counter
             transfer.id = self.next_transfer_id
@@ -131,7 +131,7 @@ class Greedy:
                 raise web.Conflict("Transfer source/destination must not change")
             
             # Allocate as many streams as possible up to the default
-            key = self.make_allocation_key(transfer)
+            key = self.make_resources_key(transfer)
             if key not in self.resources:
                 raise web.Conflict("No allocation record for these endpoints (key="+key+")")
             
@@ -170,7 +170,7 @@ class Greedy:
             del self.transfers[id]
             
             # "Return" the resources to the pool
-            key = self.make_allocation_key(transfer)
+            key = self.make_resources_key(transfer)
             self.resources[key] += transfer.streams
             if self.resources[key] > self.max_streams:
                 self.resources[key] = self.max_streams
