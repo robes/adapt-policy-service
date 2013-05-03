@@ -11,21 +11,28 @@ from policy import Policy, MalformedTransfer, TransferNotFound, NotAllowed, Poli
 
 __all__ = ["Greedy"]
 
-MAX_STREAMS     = 36 # Max streams per-pairwise endpoints
-DEFAULT_STREAMS = 8  # Default streams allocated per new request
-MIN_STREAMS     = 0  # Minimum streams allocated when over-allocated
 
 class Greedy(Policy):
     '''The greedy policy manager.'''
     
-    def __init__(self):
+    def __init__(self, max_streams=36, default_streams=8, min_streams=0):
+        '''Initialize the Greedy policy manager.
+        
+        Parameter 'max_streams' sets the max streams per-pairwise endpoints.
+        
+        Parameter 'default_streams' sets the default streams allocated per new 
+        request.
+        
+        Parameter 'min_streams' sets the minimum streams allocated when the 
+        'max_streams' limit has been reached.
+        '''
         self.lock = threading.Lock()
         self.next_transfer_id = 0L
         self.transfers = {}
         self.resources = {}
-        self.max_streams = MAX_STREAMS
-        self.default_streams = DEFAULT_STREAMS
-        self.min_streams = MIN_STREAMS
+        self.max_streams = max_streams
+        self.default_streams = default_streams
+        self.min_streams = min_streams
     
     
     def dump(self):
