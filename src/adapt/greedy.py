@@ -20,14 +20,14 @@ class Greedy:
         self.lock = threading.Lock()
         self.next_transfer_id = 0L
         self.transfers = {}
-        self.allocations = {}
+        self.resources = {}
         self.max_streams = MAX_STREAMS
         self.default_streams = DEFAULT_STREAMS
         self.min_streams = MIN_STREAMS
     
     
     def dump(self):
-        return (self.transfers, self.allocations)
+        return (self.transfers, self.resources)
     
     
     def make_allocation_key(self, transfer):
@@ -75,19 +75,19 @@ class Greedy:
             self.next_transfer_id += 1L
             
             # Allocate as many streams as possible up to the default
-            if key in self.allocations:
-                available = self.allocations[key]
+            if key in self.resources:
+                available = self.resources[key]
                 if available >= self.default_streams:
                     transfer.streams = self.default_streams
-                    self.allocations[key] -= self.default_streams
+                    self.resources[key] -= self.default_streams
                 elif available == 0:
                     transfer.streams = self.min_streams
                 else:
                     transfer.streams = available
-                    self.allocations[key] = 0
+                    self.resources[key] = 0
             else:
                 transfer.streams = self.default_streams
-                self.allocations[key] = self.max_streams - self.default_streams
+                self.resources[key] = self.max_streams - self.default_streams
             
             if transfer.streams == self.default_streams:
                 transfer.threshold = True
@@ -132,21 +132,21 @@ class Greedy:
             
             # Allocate as many streams as possible up to the default
             key = self.make_allocation_key(transfer)
-            if key not in self.allocations:
+            if key not in self.resources:
                 raise web.Conflict("No allocation record for these endpoints (key="+key+")")
             
-            available = self.allocations[key]
+            available = self.resources[key]
             requested = transfer.streams
             delta = requested - original.streams
             
             if available >= delta:
                 web.debug("Granting %s streams" % delta)
                 original.streams += delta
-                self.allocations[key] -= delta
+                self.resources[key] -= delta
             elif available > 0:
                 web.debug("Granting %s streams" % available)
                 original.streams += available
-                self.allocations[key] = 0
+                self.resources[key] = 0
             else:
                 web.debug("No streams available to allocate")
             
@@ -169,11 +169,11 @@ class Greedy:
             transfer = self.transfers[id]
             del self.transfers[id]
             
-            # "Return" the allocations to the pool
+            # "Return" the resources to the pool
             key = self.make_allocation_key(transfer)
-            self.allocations[key] += transfer.streams
-            if self.allocations[key] > self.max_streams:
-                self.allocations[key] = self.max_streams
+            self.resources[key] += transfer.streams
+            if self.resources[key] > self.max_streams:
+                self.resources[key] = self.max_streams
 
 
 class Transfer:
@@ -267,10 +267,10 @@ class Dump:
         
         Dumps the state of the policy module. For debug purpose only.
         '''
-        (transfers, allocations) = policy.dump()
+        (transfers, resources) = policy.dump()
         dump = web.Storage()
         dump.transfers = transfers
-        dump.allocations = allocations
+        dump.resources = resources
         return json.dumps(dump)
 
 
