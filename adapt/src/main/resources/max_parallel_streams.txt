@@ -1,6 +1,0 @@
-# Defines the maximum parallel streams allowed from one host to another
-# <host 1> <host 2> <max parallel streams>
-
-# Examples:
-#server1.isi.edu client1.isi.edu 22
-#server2.isi.edu client2.isi.edu 18
