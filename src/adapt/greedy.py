@@ -15,7 +15,7 @@ __all__ = ["Greedy"]
 class Greedy(Policy):
     '''The greedy policy manager.'''
     
-    def __init__(self, max_streams=36, default_streams=8, min_streams=0):
+    def __init__(self, min_streams=0, initial_streams=8, update_streams_incr=8, per_req_max_streams=8, per_hosts_max_streams=36):
         '''Initialize the Greedy policy manager.
         
         Parameter 'max_streams' sets the max streams per-pairwise endpoints.
@@ -30,9 +30,18 @@ class Greedy(Policy):
         self.next_transfer_id = 0L
         self.transfers = {}
         self.resources = {}
-        self.max_streams = max_streams
-        self.default_streams = default_streams
+        self.initial_streams = initial_streams
+        self.update_streams_incr = update_streams_incr
+        self.per_req_max_streams = per_req_max_streams
+        self.per_hosts_max_streams = per_hosts_max_streams
         self.min_streams = min_streams
+        if min_streams > 0:
+            # 'min_streams' as implemented in this class, has a bug in it
+            # on 'remove()' if a minimum allocation was made the streams
+            # will get added into the allocations log, thus temporarily
+            # and incorrectly increasing the allocations available between 
+            # the hosts
+            raise NotImplementedError("Sorry 'min_streams' has not yet been implemented")
     
     
     def dump(self):
@@ -86,19 +95,20 @@ class Greedy(Policy):
             # Allocate as many streams as possible up to the default
             if key in self.resources:
                 available = self.resources[key]
-                if available >= self.default_streams:
-                    transfer.streams = self.default_streams
-                    self.resources[key] -= self.default_streams
+                if available >= self.initial_streams:
+                    transfer.streams = self.initial_streams
+                    self.resources[key] -= self.initial_streams
                 elif available == 0:
                     transfer.streams = self.min_streams
                 else:
                     transfer.streams = available
                     self.resources[key] = 0
             else:
-                transfer.streams = self.default_streams
-                self.resources[key] = self.max_streams - self.default_streams
+                # This is the first allocation for these hosts, that we know of
+                transfer.streams = self.initial_streams
+                self.resources[key] = self.per_hosts_max_streams - self.initial_streams
             
-            if transfer.streams == self.default_streams:
+            if transfer.streams == self.per_req_max_streams:
                 transfer.threshold = True
             else:
                 transfer.threshold = False
@@ -130,8 +140,12 @@ class Greedy(Policy):
         with self.lock:
             if not self.transfers.has_key(transferId):
                 raise TransferNotFound()
-            if not 'streams' in transfer or transfer.streams < 0:
-                transfer.streams = self.default_streams
+                
+            # Get resource allocations key
+            key = self.make_resources_key(transfer)
+            if key not in self.resources:
+                # This should not ever happen... it would be a bug if it did
+                raise PolicyError("No allocation record for these endpoints (key="+key+")")
             
             # Make sure the src/dst match the original
             original = self.transfers[transferId]
@@ -139,11 +153,21 @@ class Greedy(Policy):
                 transfer.destination != original.destination:
                 raise NotAllowed("Cannot change source or destination endpoitns during an update")
             
-            # Allocate as many streams as possible up to the default
-            key = self.make_resources_key(transfer)
-            if key not in self.resources:
-                raise PolicyError("No allocation record for these endpoints (key="+key+")")
+            # Set streams request to:
+            #   -- requested streams if set by caller
+            #   -- current + update_increment if not set by caller
+            #   -- or initial streams if currently allocated to 0
+            if not 'streams' in transfer or transfer.streams < 0:
+                if original.streams == 0:
+                    transfer.streams = self.initial_streams
+                else:
+                    transfer.streams = original.streams + self.update_streams_incr
             
+            # Limit request attempt to the per_req_max_streams
+            if transfer.streams > self.per_req_max_streams:
+                transfer.streams = self.per_req_max_streams
+            
+            # Limit allocation up to available streams
             available = self.resources[key]
             requested = transfer.streams
             delta = requested - original.streams
@@ -159,7 +183,7 @@ class Greedy(Policy):
             else:
                 web.debug("No streams available to allocate")
             
-            if original.streams == self.default_streams:
+            if original.streams == self.per_req_max_streams:
                 original.threshold = True
             else:
                 original.threshold = False
@@ -181,6 +205,6 @@ class Greedy(Policy):
             # "Return" the resources to the pool
             key = self.make_resources_key(transfer)
             self.resources[key] += transfer.streams
-            if self.resources[key] > self.max_streams:
-                self.resources[key] = self.max_streams
+            if self.resources[key] > self.per_hosts_max_streams:
+                self.resources[key] = self.per_hosts_max_streams
 
