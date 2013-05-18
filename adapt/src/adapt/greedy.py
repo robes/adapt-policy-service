@@ -15,24 +15,30 @@ __all__ = ["Greedy"]
 class Greedy(Policy):
     '''The greedy policy manager.'''
     
-    def __init__(self, min_streams=0, initial_streams=8, update_streams_incr=8, per_req_max_streams=8, per_hosts_max_streams=36):
+    def __init__(self, min_streams=0, initial_streams=8, update_incr_streams=8, max_streams=8, per_hosts_max_streams=36):
         '''Initialize the Greedy policy manager.
-        
-        Parameter 'max_streams' sets the max streams per-pairwise endpoints.
-        
-        Parameter 'default_streams' sets the default streams allocated per new 
-        request.
         
         Parameter 'min_streams' sets the minimum streams allocated when the 
         'max_streams' limit has been reached.
+        
+        Parameter 'initial_streams' sets the initial streams allocated per new 
+        request.
+
+        Parameter 'update_incr_streams' set the increment added to an update
+        request's stream allocation.
+
+        Parameter 'max_streams' sets the max streams per-pairwise endpoints.
+
+        Parameter 'per_hosts_max_streams' sets the per hosts (i.e., per pair of
+        host endpoints) max streams.
         '''
         self.lock = threading.Lock()
         self.next_transfer_id = 0L
         self.transfers = {}
         self.resources = {}
         self.initial_streams = initial_streams
-        self.update_streams_incr = update_streams_incr
-        self.per_req_max_streams = per_req_max_streams
+        self.update_incr_streams = update_incr_streams
+        self.max_streams = max_streams
         self.per_hosts_max_streams = per_hosts_max_streams
         self.min_streams = min_streams
         if min_streams > 0:
@@ -108,7 +114,7 @@ class Greedy(Policy):
                 transfer.streams = self.initial_streams
                 self.resources[key] = self.per_hosts_max_streams - self.initial_streams
             
-            if transfer.streams == self.per_req_max_streams:
+            if transfer.streams == self.max_streams:
                 transfer.threshold = True
             else:
                 transfer.threshold = False
@@ -161,11 +167,11 @@ class Greedy(Policy):
                 if original.streams == 0:
                     transfer.streams = self.initial_streams
                 else:
-                    transfer.streams = original.streams + self.update_streams_incr
+                    transfer.streams = original.streams + self.update_incr_streams
             
-            # Limit request attempt to the per_req_max_streams
-            if transfer.streams > self.per_req_max_streams:
-                transfer.streams = self.per_req_max_streams
+            # Limit request attempt to the max_streams
+            if transfer.streams > self.max_streams:
+                transfer.streams = self.max_streams
             
             # Limit allocation up to available streams
             available = self.resources[key]
@@ -183,7 +189,7 @@ class Greedy(Policy):
             else:
                 web.debug("No streams available to allocate")
             
-            if original.streams == self.per_req_max_streams:
+            if original.streams == self.max_streams:
                 original.threshold = True
             else:
                 original.threshold = False
