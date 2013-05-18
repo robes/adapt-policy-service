@@ -19,7 +19,7 @@ class Greedy(Policy):
         '''Initialize the Greedy policy manager.
         
         Parameter 'min_streams' sets the minimum streams allocated when the 
-        'max_streams' limit has been reached.
+        'per_hosts_max_streams' limit has been reached.
         
         Parameter 'initial_streams' sets the initial streams allocated per new 
         request.
