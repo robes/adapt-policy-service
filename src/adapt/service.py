@@ -124,6 +124,13 @@ class Dump:
         dump.resources = resources
         return json.dumps(dump)
 
+## To run the server with SSL (i.e., HTTPS), uncomment the following lines
+## and set the paths to your key and certificate files. Remember that the
+## service must run as the same user that owns the certificate, otherwise
+## it will not be able to read use it.
+#from web.wsgiserver import CherryPyWSGIServer
+#CherryPyWSGIServer.ssl_certificate = "/path/to/ssl_certificate"
+#CherryPyWSGIServer.ssl_private_key = "/path/to/ssl_private_key"
 
 urls = (
     '/transfer/(.*)', 'Transfer',
