@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from service import main
+from main import main

@@ -14,16 +14,16 @@
 # limitations under the License.
 #
 """
-The service implementation.
+The REST service handlers for use with the web.py framework.
 """
 
 import web
 import json
-from policy import MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
-from greedy import Greedy
-import config
 
-__all__ = ["main"]
+import config
+from policy import MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
+
+__all__ = ['Transfer', 'Dump']
 
 class Transfer:
     '''RESTful web handler for Transfer resources.'''
@@ -141,23 +141,3 @@ class Dump:
         dump.transfers = transfers
         dump.resources = resources
         return json.dumps(dump)
-
-## web.py urls
-urls = (
-    '/transfer/(.*)', 'Transfer',
-    '/transfer', 'Transfer',
-    '/dump', 'Dump'
-)
-app = web.application(urls, globals())
-
-def main(argv):
-    if config.ssl:
-        from web.wsgiserver import CherryPyWSGIServer
-        CherryPyWSGIServer.ssl_certificate = config.ssl_certificate
-        CherryPyWSGIServer.ssl_private_key = config.ssl_private_key
-    
-    #TODO: get arguments from cmdline, then set adapt.config.policy (and
-    #  future system-wide config parameters) then continue
-    config.policy = Greedy(**config.policy_defaults)
-    
-    app.run()
