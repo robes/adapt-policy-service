@@ -9,5 +9,5 @@ setup(name='policy-adapt',
       description='Adaptive transfer policy service',
       packages=['adapt'],
       package_dir={'': 'src'},
-      #scripts=['bin/adapt-greedy']
+      scripts=['sbin/policy-service']
       )
