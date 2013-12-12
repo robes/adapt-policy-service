@@ -36,8 +36,10 @@ class Transfer:
         if transferId:
             raise web.NoMethod()
         
-        raw = web.data()
         try:
+            raw = web.data()
+            if config.audit:
+                web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
             transfer = config.policy.add(transfer)
@@ -84,6 +86,8 @@ class Transfer:
         
         try:
             raw = web.data()
+            if config.audit:
+                web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
             transfer = config.policy.update(transferId, transfer)
@@ -138,13 +142,12 @@ class Dump:
         dump.resources = resources
         return json.dumps(dump)
 
-
+## web.py urls
 urls = (
     '/transfer/(.*)', 'Transfer',
     '/transfer', 'Transfer',
     '/dump', 'Dump'
 )
-web.config.debug = False
 app = web.application(urls, globals())
 
 def main(argv):

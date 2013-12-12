@@ -16,6 +16,10 @@
 """
 The policy service configuration.
 
+The 'audit' parameter enables/disables additional request audit logging.
+
+The 'debug' parameter enables/disables debug logging mode.
+
 The 'ssl' parameter enables/disables HTTPS.
 
 The 'ssl_certificate' and 'ssl_private_key' must be set to the paths of a 
@@ -28,6 +32,9 @@ policy manager, a sub-class of adapt.policy.Policy.
 The 'policy_defaults' define the defaults settings passed to the policy
 implementation.
 """
+
+audit = False
+debug = False
 
 ssl = False
 ssl_certificate = "/path/to/ssl_certificate"
