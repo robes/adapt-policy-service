@@ -106,6 +106,7 @@ class Greedy(Policy):
                     self.resources[key] -= self.initial_streams
                 elif available == 0:
                     transfer.streams = self.min_streams
+                    self.resources[key] -= self.min_streams
                 else:
                     transfer.streams = available
                     self.resources[key] = 0
