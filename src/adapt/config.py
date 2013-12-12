@@ -17,18 +17,27 @@
 """
 The policy service configuration.
 
-The 'policy' configuration parameter should be set to a properly initialized
-policy manager, a sub-class of adapt.policy.Policy.
-
 The 'ssl' parameter enables/disables HTTPS.
 
 The 'ssl_certificate' and 'ssl_private_key' must be set to the paths of a 
 valid host certificate and key. The files must be owned by the same user
 that runs the policy service.
-"""
 
-policy = None
+The 'policy' configuration parameter should be set to a properly initialized
+policy manager, a sub-class of adapt.policy.Policy.
+
+The 'policy_defaults' define the defaults settings passed to the policy
+implementation.
+"""
 
 ssl = False
 ssl_certificate = "/path/to/ssl_certificate"
 ssl_private_key = "/path/to/ssl_private_key"
+
+policy = None
+
+policy_defaults = dict(min_streams=0, 
+                       initial_streams=8, 
+                       update_incr_streams=8, 
+                       max_streams=8, 
+                       per_hosts_max_streams=36)

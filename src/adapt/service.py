@@ -156,6 +156,6 @@ def main(argv):
     
     #TODO: get arguments from cmdline, then set adapt.config.policy (and
     #  future system-wide config parameters) then continue
-    config.policy = Greedy()
+    config.policy = Greedy(**config.policy_defaults)
     
     app.run()
