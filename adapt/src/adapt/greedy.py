@@ -41,13 +41,6 @@ class Greedy(Policy):
         self.max_streams = max_streams
         self.per_hosts_max_streams = per_hosts_max_streams
         self.min_streams = min_streams
-        if min_streams > 0:
-            # 'min_streams' as implemented in this class, has a bug in it
-            # on 'remove()' if a minimum allocation was made the streams
-            # will get added into the allocations log, thus temporarily
-            # and incorrectly increasing the allocations available between 
-            # the hosts
-            raise NotImplementedError("Sorry 'min_streams' has not yet been implemented")
     
     
     def dump(self):
@@ -134,6 +127,7 @@ class Greedy(Policy):
             else:
                 return deepcopy(self.transfers[transferId])
     
+    
     def update(self, transferId, transfer):
         '''Updates a transfer and returns the current state of it.
         
@@ -197,6 +191,7 @@ class Greedy(Policy):
             
             return deepcopy(original)
     
+    
     def remove(self, transferId):
         '''Removes a transfer and frees up allocated resources.
         
@@ -214,4 +209,3 @@ class Greedy(Policy):
             self.resources[key] += transfer.streams
             if self.resources[key] > self.per_hosts_max_streams:
                 self.resources[key] = self.per_hosts_max_streams
-
