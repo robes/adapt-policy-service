@@ -30,8 +30,10 @@ __all__ = ["Greedy"]
 class Greedy(Policy):
     '''The greedy policy manager.'''
     
-    def __init__(self, min_streams=0, initial_streams=8, update_incr_streams=8, max_streams=8, per_hosts_max_streams=36):
+    def __init__(self, **kwargs):
         '''Initialize the Greedy policy manager.
+        
+        Keyword Arguments:
         
         Parameter 'min_streams' sets the minimum streams allocated when the 
         'per_hosts_max_streams' limit has been reached.
@@ -51,11 +53,11 @@ class Greedy(Policy):
         self.next_transfer_id = 0L
         self.transfers = {}
         self.resources = {}
-        self.initial_streams = initial_streams
-        self.update_incr_streams = update_incr_streams
-        self.max_streams = max_streams
-        self.per_hosts_max_streams = per_hosts_max_streams
-        self.min_streams = min_streams
+        self.initial_streams = kwargs.get('initial_streams', 8)
+        self.update_incr_streams = kwargs.get('update_incr_streams', 8)
+        self.max_streams = kwargs.get('max_streams', 8)
+        self.per_hosts_max_streams = kwargs.get('per_hosts_max_streams', 36)
+        self.min_streams = kwargs.get('min_streams', 0)
     
     
     def dump(self):
