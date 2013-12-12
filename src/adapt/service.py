@@ -1,15 +1,30 @@
-'''
-Created on May 3, 2013
+#!/usr/bin/env python
+# 
+# Copyright 2013 University of Southern California
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#    http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""
+The service implementation.
+"""
 
-@author: schuler
-'''
 import web
 import json
 from policy import MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
 from greedy import Greedy
-from config import policy
+import config
 
-__all__ = ["Transfer", "Dump"]
+__all__ = ["main"]
 
 class Transfer:
     '''RESTful web handler for Transfer resources.'''
@@ -26,25 +41,25 @@ class Transfer:
         try:
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
-            transfer = policy.add(transfer)
+            transfer = config.policy.add(transfer)
             return json.dumps(transfer)
         except MalformedTransfer as e:
             msg = "Bad request body in POST to transfer/ resource: " + str(e)
             web.debug(msg)
             raise web.BadRequest(msg)
     
-    def GET(self, transferId):
+    def GET(self, transferId=None):
         ''' GET /transfer/[ID]
         
         Returns all or one transfer representation.
         '''
         if not transferId:
-            transfers = policy.all()
+            transfers = config.policy.all()
             return json.dumps(transfers)
         
         try:
             transferId = int(transferId)
-            transfer = policy.get(transferId)
+            transfer = config.policy.get(transferId)
             return json.dumps(transfer)
         except TransferNotFound:
             msg = "Cannot GET transfer resource transfer/"+str(transferId)+". Resource not found."
@@ -72,7 +87,7 @@ class Transfer:
             raw = web.data()
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
-            transfer = policy.update(transferId, transfer)
+            transfer = config.policy.update(transferId, transfer)
             return json.dumps(transfer)
         except TransferNotFound:
             msg = "Cannot PUT to transfer resource transfer/"+str(transferId)+". Resource not found."
@@ -103,7 +118,7 @@ class Transfer:
         
         try:
             transferId = int(transferId)
-            policy.remove(transferId)
+            config.policy.remove(transferId)
         except TransferNotFound:
             msg = "Cannot DELETE transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
@@ -118,19 +133,12 @@ class Dump:
         
         Dumps the state of the policy module. For debug purpose only.
         '''
-        (transfers, resources) = policy.dump()
+        (transfers, resources) = config.policy.dump()
         dump = web.Storage()
         dump.transfers = transfers
         dump.resources = resources
         return json.dumps(dump)
 
-## To run the server with SSL (i.e., HTTPS), uncomment the following lines
-## and set the paths to your key and certificate files. Remember that the
-## service must run as the same user that owns the certificate, otherwise
-## it will not be able to read use it.
-#from web.wsgiserver import CherryPyWSGIServer
-#CherryPyWSGIServer.ssl_certificate = "/path/to/ssl_certificate"
-#CherryPyWSGIServer.ssl_private_key = "/path/to/ssl_private_key"
 
 urls = (
     '/transfer/(.*)', 'Transfer',
@@ -140,10 +148,14 @@ urls = (
 web.config.debug = False
 app = web.application(urls, globals())
 
-
-if __name__ == "__main__":
+def main(argv):
+    if config.ssl:
+        from web.wsgiserver import CherryPyWSGIServer
+        CherryPyWSGIServer.ssl_certificate = config.ssl_certificate
+        CherryPyWSGIServer.ssl_private_key = config.ssl_private_key
+    
     #TODO: get arguments from cmdline, then set adapt.config.policy (and
     #  future system-wide config parameters) then continue
-    policy = Greedy()
+    config.policy = Greedy()
     
     app.run()
