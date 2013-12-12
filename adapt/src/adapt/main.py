@@ -37,12 +37,18 @@ def main(argv):
     prog = argv[0]
     for arg in argv[1:]:
         if arg in ('-h', '--help'):
-            _usage()
+            _usage(prog)
+            return 0
+        elif arg in ('--print-config'):
+            _print_config()
+            return 0
     
     if config.ssl:
         from web.wsgiserver import CherryPyWSGIServer
         CherryPyWSGIServer.ssl_certificate = config.ssl_certificate
         CherryPyWSGIServer.ssl_private_key = config.ssl_private_key
+        
+    web.config.debug = config.debug
     
     #TODO: get arguments from cmdline, then set adapt.config.policy (and
     #  future system-wide config parameters) then continue
@@ -64,7 +70,7 @@ usage: %(prog)s [options...] [<config filename>]
 
 Run this program to invoke the Policy Service.
 
-  options:  --help                (print this message and quit)
+  options:  -h, --help            (print this message and quit)
             <config filename>     (load the configuration from
                                    this file)
 
@@ -74,3 +80,13 @@ Exit status:
   1  for usage error
 
 """ % dict(prog=prog)
+
+def _print_config():
+    import pprint
+    _cfg = dict(audit=config.audit,
+               debug=config.debug,
+               ssl=config.ssl,
+               ssl_certificate=config.ssl_certificate,
+               ssl_private_key=config.ssl_private_key,
+               policy_params=config.policy_defaults)
+    pprint.pprint(_cfg, indent=2)
