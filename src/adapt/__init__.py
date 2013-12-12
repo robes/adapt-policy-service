@@ -15,3 +15,5 @@
 #
 
 from main import main
+
+version = {'major': 0, 'minor': 0}
