@@ -124,6 +124,7 @@ class Transfer:
         try:
             transferId = int(transferId)
             policy.remove(transferId)
+            return ''
         except TransferNotFound:
             msg = "Cannot DELETE transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
