@@ -96,11 +96,17 @@ def main():
         CherryPyWSGIServer.ssl_certificate = config.ssl.ssl_certificate
         CherryPyWSGIServer.ssl_private_key = config.ssl.ssl_private_key
     
-    #TODO: get arguments from cmdline, then set adapt.config.policy (and
-    #  future system-wide config parameters) then continue
-    service.policy = Greedy(**config.policy)
+    # dynamically load the policy implementation
+    try:
+        policy_class = _dynamic_load(config.policy.policy_class)
+        service.policy = policy_class(**config.policy)
+    except Exception, e:
+        print >> sys.stderr, 'ERROR: Unable to load policy class: ' \
+                               + config.policy.policy_class
+        print >> sys.stderr, 'ERROR: Cause: ' + str(e)
+        return 2
     
-    ## web.py urls
+    # web.py urls
     urls = (
         '/transfer/(.*)', service.Transfer,
         '/transfer', service.Transfer,
@@ -108,6 +114,19 @@ def main():
     )
     app = web.application(urls, globals())
     app.run()
+
+
+def _dynamic_load(policyname):
+    """Dynamically loads a module or class.
+    
+       The 'policyname' specifies the module or class and is expected to
+       include '.' path separators, however, (sub)packages are not required.
+    """
+    names = policyname.split('.')
+    policy = __import__(names[0])
+    for name in names[1:]:
+        policy = getattr(policy, name)
+    return policy
 
 
 def _usage(prog):
