@@ -18,12 +18,13 @@ The main and supporting routines for invocing the Policy Service from the
 command line.
 """
 
-import web
-import json
 import sys
+import os
+import json
+import web
 
 import service
-from config import config, load_config
+from config import config, load_config, default_config_filename
 from greedy import Greedy
 
 __all__ = ['main']
@@ -50,7 +51,7 @@ def main():
     
     # Process argument list
     args = sys.argv
-    prog = args[0]
+    prog = os.path.basename(args[0])
     for arg in args[1:]:
         if arg in (__OPT_HELP):
             _usage(prog)
@@ -61,6 +62,7 @@ def main():
             opt_config_filename = arg[len(__OPT_CONFIG):]
         elif arg in (__OPT_DEBUG):
             opt_debug = True
+            config.logging.debug = True
         elif arg.startswith(__OPT_IPADDR):
             opt_ipaddr = arg[len(__OPT_IPADDR):]
         elif arg.startswith(__OPT_PORT):
@@ -72,16 +74,22 @@ def main():
     # Reconstruct sys.argv for web.py: ['prog', 'ipaddr:port']
     sys.argv = [args[0], ':'.join([e for e in [opt_ipaddr, opt_port] if e])]
     
-    load_config(opt_config_filename)
-    if opt_print_config:
-        print json.dumps(config, indent=2)
+    try:
+        load_config(opt_config_filename)
+    except ValueError, err:
+        print >> sys.stderr, ('ERROR: ' + str(err))
+        return 2
     
     if opt_debug:
         config.logging.debug = True
     if config.logging.debug:
         web.config.debug = True
-        print >> sys.stderr, ('args: ' + str(args))
-        print >> sys.stderr, ('config: ' + str(json.dumps(config)))
+        print >> sys.stderr, ('ARGS: ' + str(args))
+        print >> sys.stderr, ('CONFIG: ' + str(json.dumps(config)))
+        
+    if opt_print_config:
+        print json.dumps(config, indent=2)
+        return 0
     
     if config.ssl.ssl_enabled:
         from web.wsgiserver import CherryPyWSGIServer
@@ -104,14 +112,15 @@ def main():
 
 def _usage(prog):
     print """
-usage: %(prog)s [options...] [<config filename>]
+usage: %(prog)s [options...]
 
 Run the Policy Service.
 
   options:  --help             (print this message and quit)
             --debug            (more verbose logging)
             --print-config     (print the configuration and quit)
-            --config=<file>    (load configuration from <file>)
+            --config=<file>    (load configuration from <file>;
+                                default: %(default)s)
             --ipaddr=<ipaddr>  (listen on <ipaddr>)
             --port=<port>      (listen on <port>)
 
@@ -119,5 +128,6 @@ Exit status:
 
   0  for success
   1  for usage error
+  2  for configuration error
 
-""" % dict(prog=prog)
+""" % dict(prog=prog, default=default_config_filename)
