@@ -62,7 +62,7 @@ def main():
             opt_config_filename = arg[len(__OPT_CONFIG):]
         elif arg in (__OPT_DEBUG):
             opt_debug = True
-            config.logging.debug = True
+            config.debug = True
         elif arg.startswith(__OPT_IPADDR):
             opt_ipaddr = arg[len(__OPT_IPADDR):]
         elif arg.startswith(__OPT_PORT):
@@ -81,8 +81,8 @@ def main():
         return 2
     
     if opt_debug:
-        config.logging.debug = True
-    if config.logging.debug:
+        config.debug = True
+    if config.debug:
         web.config.debug = True
         print >> sys.stderr, ('ARGS: ' + str(args))
         print >> sys.stderr, ('CONFIG: ' + str(json.dumps(config)))
