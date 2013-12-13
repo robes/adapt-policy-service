@@ -40,7 +40,7 @@ class Transfer:
         
         try:
             raw = web.data()
-            if config.logging.audit:
+            if config.audit:
                 web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
@@ -88,7 +88,7 @@ class Transfer:
         
         try:
             raw = web.data()
-            if config.logging.audit:
+            if config.audit:
                 web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)

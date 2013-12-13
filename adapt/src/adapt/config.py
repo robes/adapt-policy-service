@@ -41,24 +41,20 @@ __all__ = ['config', 'load_config', 'default_config_filename']
 
 default_config_filename = '~/policyservice.conf'
 
-__logging_defaults = dict(audit=False, 
-                debug=False)
-
-__ssl_defaults = dict(ssl_enabled=False,
-            ssl_certificate = "/path/to/ssl_certificate",
-            ssl_private_key = "/path/to/ssl_private_key")
-
-__policy_defaults = dict(policy_class='adapt.greedy.Greedy',
-               min_streams=0, 
-               initial_streams=8, 
-               update_incr_streams=8, 
-               max_streams=8, 
-               per_hosts_max_streams=36)
-
 config = web.Storage()
-config.logging = web.storify(__logging_defaults)
-config.ssl = web.storify(__ssl_defaults)
-config.policy = web.storify(__policy_defaults)
+config.debug = False
+config.audit = False
+config.ssl = web.storify(dict(
+                    ssl_enabled=False,
+                    ssl_certificate = "/path/to/ssl_certificate",
+                    ssl_private_key = "/path/to/ssl_private_key"))
+config.policy = web.storify(dict(
+                    policy_class='adapt.greedy.Greedy',
+                    min_streams=0, 
+                    initial_streams=8, 
+                    update_incr_streams=8, 
+                    max_streams=8, 
+                    per_hosts_max_streams=36))
 
 def load_config(filename=None):
     """Load configuration from file and merge with defaults.
@@ -73,7 +69,7 @@ def load_config(filename=None):
         if not os.path.exists(filename):
             return
     
-    if config.logging.debug:
+    if config.debug:
         web.debug("Loading configuration from: " + filename)
     
     input = json.load(file(filename))
@@ -82,7 +78,8 @@ def load_config(filename=None):
     for topic in input:
         if topic not in config:
             continue
+        if not isinstance(input[topic], dict):
+            config[topic] = input[topic]
+            continue
         for key in input[topic]:
-            if key not in input[topic]:
-                continue
             config[topic][key] = input[topic][key]
