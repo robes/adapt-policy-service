@@ -37,7 +37,9 @@ import os
 import json
 import web
 
-__all__ = ['config', 'load_config']
+__all__ = ['config', 'load_config', 'default_config_filename']
+
+default_config_filename = '~/policyservice.conf'
 
 __logging_defaults = dict(audit=False, 
                 debug=False)
@@ -64,12 +66,18 @@ def load_config(filename=None):
        The 'filename' of the configuration file.
     """
     # load config file
+    if filename and filename.startswith('~'):
+        filename = os.path.expanduser(filename)
     if not filename or not os.path.exists(filename):
-        filename = os.path.expanduser('~') + '/policyservice.conf.json'
+        filename = os.path.expanduser(default_config_filename)
         if not os.path.exists(filename):
             return
-    input = json.load(file(filename))
     
+    if config.logging.debug:
+        web.debug("Loading configuration from: " + filename)
+    
+    input = json.load(file(filename))
+
     # merge config
     for topic in input:
         if topic not in config:
