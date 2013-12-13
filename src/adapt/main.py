@@ -19,40 +19,78 @@ command line.
 """
 
 import web
+import json
+import sys
 
 import service
-import config
+from config import config, load_config
 from greedy import Greedy
 
 __all__ = ['main']
 
-def main(argv):
+
+__OPT_HELP='--help'
+__OPT_DEBUG='--debug'
+__OPT_PRINT_CONFIG='--print-config'
+__OPT_CONFIG='--config='
+__OPT_IPADDR='--ipaddr='
+__OPT_PORT='--port='
+
+
+def main():
     """Main routine to run the Policy Service.
     
-       The 'argv' argument should come from the system command line 
-       arguments.
+       This routine processes the 'sys.argv' command line arguments.
     """
+    opt_debug = False
+    opt_print_config = False
+    opt_config_filename = None
+    opt_ipaddr = None
+    opt_port = None
     
     # Process argument list
-    prog = argv[0]
-    for arg in argv[1:]:
-        if arg in ('-h', '--help'):
+    args = sys.argv
+    prog = args[0]
+    for arg in args[1:]:
+        if arg in (__OPT_HELP):
             _usage(prog)
             return 0
-        elif arg in ('--print-config'):
-            _print_config()
-            return 0
+        elif arg in (__OPT_PRINT_CONFIG):
+            opt_print_config = True
+        elif arg.startswith(__OPT_CONFIG):
+            opt_config_filename = arg[len(__OPT_CONFIG):]
+        elif arg in (__OPT_DEBUG):
+            opt_debug = True
+        elif arg.startswith(__OPT_IPADDR):
+            opt_ipaddr = arg[len(__OPT_IPADDR):]
+        elif arg.startswith(__OPT_PORT):
+            opt_port = arg[len(__OPT_PORT):]
+        else:
+            _usage(prog)
+            return 1
     
-    if config.ssl:
+    # Reconstruct sys.argv for web.py: ['prog', 'ipaddr:port']
+    sys.argv = [args[0], ':'.join([e for e in [opt_ipaddr, opt_port] if e])]
+    
+    load_config(opt_config_filename)
+    if opt_print_config:
+        print json.dumps(config, indent=2)
+    
+    if opt_debug:
+        config.logging.debug = True
+    if config.logging.debug:
+        web.config.debug = True
+        print >> sys.stderr, ('args: ' + str(args))
+        print >> sys.stderr, ('config: ' + str(json.dumps(config)))
+    
+    if config.ssl.ssl_enabled:
         from web.wsgiserver import CherryPyWSGIServer
-        CherryPyWSGIServer.ssl_certificate = config.ssl_certificate
-        CherryPyWSGIServer.ssl_private_key = config.ssl_private_key
-        
-    web.config.debug = config.debug
+        CherryPyWSGIServer.ssl_certificate = config.ssl.ssl_certificate
+        CherryPyWSGIServer.ssl_private_key = config.ssl.ssl_private_key
     
     #TODO: get arguments from cmdline, then set adapt.config.policy (and
     #  future system-wide config parameters) then continue
-    config.policy = Greedy(**config.policy_defaults)
+    service.policy = Greedy(**config.policy)
     
     ## web.py urls
     urls = (
@@ -61,18 +99,21 @@ def main(argv):
         '/dump', service.Dump
     )
     app = web.application(urls, globals())
-    
     app.run()
+
 
 def _usage(prog):
     print """
 usage: %(prog)s [options...] [<config filename>]
 
-Run this program to invoke the Policy Service.
+Run the Policy Service.
 
-  options:  -h, --help            (print this message and quit)
-            <config filename>     (load the configuration from
-                                   this file)
+  options:  --help             (print this message and quit)
+            --debug            (more verbose logging)
+            --print-config     (print the configuration and quit)
+            --config=<file>    (load configuration from <file>)
+            --ipaddr=<ipaddr>  (listen on <ipaddr>)
+            --port=<port>      (listen on <port>)
 
 Exit status:
 
@@ -80,13 +121,3 @@ Exit status:
   1  for usage error
 
 """ % dict(prog=prog)
-
-def _print_config():
-    import pprint
-    _cfg = dict(audit=config.audit,
-               debug=config.debug,
-               ssl=config.ssl,
-               ssl_certificate=config.ssl_certificate,
-               ssl_private_key=config.ssl_private_key,
-               policy_params=config.policy_defaults)
-    pprint.pprint(_cfg, indent=2)

@@ -22,7 +22,7 @@ import threading
 from copy import deepcopy
 from urlparse import urlparse
 
-import config
+from config import config
 from policy import Policy, MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
 
 __all__ = ["Greedy"]
@@ -88,7 +88,7 @@ class Greedy(Policy):
     def all(self):
         '''Returns a dictionary of all transfer resources, keyed on transfer id.'''
         with self.lock:
-            if config.debug:
+            if config.logging.debug:
                 web.debug("all")
             return deepcopy(self.transfers)
     
@@ -102,7 +102,7 @@ class Greedy(Policy):
         A 'transfer' dictionary is expected.
         '''
         with self.lock:
-            if config.debug:
+            if config.logging.debug:
                 web.debug("add: " + str(transfer))
             key = self.make_resources_key(transfer)
             
@@ -194,17 +194,17 @@ class Greedy(Policy):
             delta = requested - original.streams
             
             if available >= delta:
-                if config.debug:
+                if config.logging.debug:
                     web.debug("Granting %s streams" % delta)
                 original.streams += delta
                 self.resources[key] -= delta
             elif available > 0:
-                if config.debug:
+                if config.logging.debug:
                     web.debug("Granting %s streams" % available)
                 original.streams += available
                 self.resources[key] = 0
             else:
-                if config.debug:
+                if config.logging.debug:
                     web.debug("No streams available to allocate")
             
             if original.streams == self.max_streams:

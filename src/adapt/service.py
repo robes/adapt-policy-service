@@ -20,10 +20,12 @@ The REST service handlers for use with the web.py framework.
 import web
 import json
 
-import config
+from config import config
 from policy import MalformedTransfer, TransferNotFound, NotAllowed, PolicyError
 
 __all__ = ['Transfer', 'Dump']
+
+policy = None
 
 class Transfer:
     '''RESTful web handler for Transfer resources.'''
@@ -38,11 +40,11 @@ class Transfer:
         
         try:
             raw = web.data()
-            if config.audit:
+            if config.logging.audit:
                 web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
-            transfer = config.policy.add(transfer)
+            transfer = policy.add(transfer)
             return json.dumps(transfer)
         except MalformedTransfer as e:
             msg = "Bad request body in POST to transfer/ resource: " + str(e)
@@ -55,12 +57,12 @@ class Transfer:
         Returns all or one transfer representation.
         '''
         if not transferId:
-            transfers = config.policy.all()
+            transfers = policy.all()
             return json.dumps(transfers)
         
         try:
             transferId = int(transferId)
-            transfer = config.policy.get(transferId)
+            transfer = policy.get(transferId)
             return json.dumps(transfer)
         except TransferNotFound:
             msg = "Cannot GET transfer resource transfer/"+str(transferId)+". Resource not found."
@@ -86,11 +88,11 @@ class Transfer:
         
         try:
             raw = web.data()
-            if config.audit:
+            if config.logging.audit:
                 web.debug("Request Body: " + str(raw))
             parsed = json.loads(raw)
             transfer = web.storify(parsed)
-            transfer = config.policy.update(transferId, transfer)
+            transfer = policy.update(transferId, transfer)
             return json.dumps(transfer)
         except TransferNotFound:
             msg = "Cannot PUT to transfer resource transfer/"+str(transferId)+". Resource not found."
@@ -121,7 +123,7 @@ class Transfer:
         
         try:
             transferId = int(transferId)
-            config.policy.remove(transferId)
+            policy.remove(transferId)
         except TransferNotFound:
             msg = "Cannot DELETE transfer resource transfer/"+str(transferId)+". Resource not found."
             web.debug(msg)
@@ -136,7 +138,7 @@ class Dump:
         
         Dumps the state of the policy module. For debug purpose only.
         '''
-        (transfers, resources) = config.policy.dump()
+        (transfers, resources) = policy.dump()
         dump = web.Storage()
         dump.transfers = transfers
         dump.resources = resources
