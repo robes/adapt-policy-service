@@ -72,7 +72,12 @@ def load_config(filename=None):
     if config.debug:
         web.debug("Loading configuration from: " + filename)
     
-    input = json.load(file(filename))
+    # skips if the file is empty
+    contents = file(filename).read()
+    if len(contents):
+        input = json.load(file(filename))
+    else:
+        return
 
     # merge config
     for topic in input:

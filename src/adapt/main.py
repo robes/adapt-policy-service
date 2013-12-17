@@ -33,6 +33,7 @@ __all__ = ['main']
 __OPT_HELP='--help'
 __OPT_DEBUG='--debug'
 __OPT_PRINT_CONFIG='--print-config'
+__OPT_DEFAULT_CONFIG='--default-config'
 __OPT_CONFIG='--config='
 __OPT_IPADDR='--ipaddr='
 __OPT_PORT='--port='
@@ -58,6 +59,9 @@ def main():
             return 0
         elif arg in (__OPT_PRINT_CONFIG):
             opt_print_config = True
+        elif arg in (__OPT_DEFAULT_CONFIG):
+            print os.path.expanduser(default_config_filename)
+            return 0
         elif arg.startswith(__OPT_CONFIG):
             opt_config_filename = arg[len(__OPT_CONFIG):]
         elif arg in (__OPT_DEBUG):
@@ -138,6 +142,7 @@ Run the Policy Service.
   options:  --help             (print this message and quit)
             --debug            (more verbose logging)
             --print-config     (print the configuration and quit)
+            --default-config   (print the default configuration file path)
             --config=<file>    (load configuration from <file>;
                                 default: %(default)s)
             --ipaddr=<ipaddr>  (listen on <ipaddr>)
