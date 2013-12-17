@@ -57,8 +57,15 @@ In some operations the representation of the resource is not one transfer but
 instead a list of transfer resources. These have the same representation except
 that they are wrapped in a json dictionary keyed by the `id`.
 
-```
-{ "id": { <transfer resource body> }, ... }
+```json
+{
+  "0": {
+    "<transfer resource body>"
+  },
+  "N": {
+    "<transfer resource body>"
+  }
+}
 ```
 
 ### Methods
@@ -126,7 +133,7 @@ that they are wrapped in a json dictionary keyed by the `id`.
 ## INSTALLATION
 
 The Policy Service requires Python 2.6+ and has been tested on Python 2.6 and 
-2.7 on CentOS 6.x distributions of the Linux operating system. In addition to 
+2\.7 on CentOS 6.x distributions of the Linux operating system. In addition to 
 Python, the `web.py` Python web framework (see [webpy.org](http://webpy.org)) 
 is required.
 
@@ -174,16 +181,16 @@ At startup, the Policy Service may load the service configuration from a file.
 If no configuration file is found, the service will run with preset defaults.
 To find the default location for your system, run the following command.
 
-```
-policy-service --help
+```sh
+$ policy-service --help
 ```
 
 The installation process does not install a configuration file. An easy way to
 create a new configuration file is to print the current configuration and save 
 it in a file. To do this, for a Linux or UNIX shell, run the following command.
 
-```
-policy-service --print-config > `policy-service --default-config`
+```sh
+$ policy-service --print-config > `policy-service --default-config`
 ```
 
 The default configuration file contents should look similar to the following.
@@ -194,15 +201,15 @@ The default configuration file contents should look similar to the following.
   "audit": false, 
   "policy": {
     "policy_class": "adapt.greedy.Greedy", 
+    "per_hosts_max_streams": 36, 
+    "initial_streams": 8, 
     "update_incr_streams": 8, 
     "max_streams": 8, 
-    "initial_streams": 8, 
-    "per_hosts_max_streams": 36, 
     "min_streams": 0
   }, 
   "ssl": {
-    "ssl_private_key": "/path/to/ssl_private_key", 
     "ssl_enabled": false, 
+    "ssl_private_key": "/path/to/ssl_private_key", 
     "ssl_certificate": "/path/to/ssl_certificate"
   }
 }
@@ -253,8 +260,8 @@ implementation.
 
 *Start* the Policy Service by running the following command.
 
-```
-policy-service
+```sh
+$ policy-service
 ```
 
 *Stop* the Policy Service with `CTRL-C` (i.e., `^C`).
