@@ -14,7 +14,172 @@ to cooperate by issuing resource allocations. It is up to the transfer clients
 to cooperate by limiting their network utilization according to the request 
 allocation.
 
-## IMPLEMENTATION
+---
+
+## INSTALLATION
+
+The Policy Service requires Python 2.6+ and has been tested on Python 2.6 and 
+2\.7 on CentOS 6.x distributions of the Linux operating system. In addition to 
+Python, the `web.py` Python web framework (see [webpy.org](http://webpy.org)) 
+is required.
+
+To find out which version of Python you have installed use the following 
+command.
+
+	```sh
+	$ python --version
+	```
+
+The following steps may be used in order to install the Adapt Policy Service 
+and its prerequisites. Note that some of the following steps require 
+administrative privileges (i.e., on Linux, the ability to run the `sudo` 
+command).
+
+1. Install `web.py`, using one of the following options:
+
+    a. (for Fedora or CentOS users) run `yum install python-webpy`
+    
+    b. (for users of `pip`) run `pip install web.py`
+    
+    c. (for all others) download the 
+       [`web.py` tarball](http://webpy.org/static/web.py-0.37.tar.gz),
+       unpack it, and run `python setup.py install`. *If you do not have 
+       administrative privileges*, unpack the tarball and set your `PYTHONPATH`
+       to the expanded directory.
+       
+	       ```sh
+	       $ wget http://webpy.org/static/web.py-0.37.tar.gz
+	       $ tar -zxf web.py-0.37.tar.gz
+	       $ cd web.py-0.37
+	       $ sudo python setup.py install
+	       ```
+
+2. Install the policy service
+
+    a. (for all users) download the 
+       [`policy service` tarball](http://tbd.isi.edu), unpack it, 
+       and run `python setup.py install`. *If you do not have administrative 
+       privileges*, unpack the tarball, set your `PYTHONPATH` to the expanded
+       directory, and set your `PATH` to the `sbin` subdirectory.
+       
+	       ```sh
+	       $ wget http://tbd.isi.edu/static/policy-service-0.10.tar.gz
+	       $ tar -zxf policy-service-0.10.tar.gz
+	       $ cd policy-service-0.10
+	       $ sudo python setup.py install
+	       ```
+
+## RUNNING
+
+ *  *Start* the Policy Service by running the following command.
+
+	    ```sh
+	    $ policy-service
+	    ```
+
+ *  *Stop* the Policy Service with `CTRL-C` (i.e., `^C`).
+
+## LIMITATIONS
+
+* *Process does not detach*: the service currently does not detach and run
+  in the background as a *daemon* process.
+
+* *In memory state*: the service's state is retained in memory only. Therefore
+  state is not maintained between service restarts.
+  
+* *Steam allocations only*: the default policy implementation (the `Greedy` 
+  policy) only supports `stream` allocations.
+
+* *CherryPy only*: although the service is built on `web.py` and as such is 
+  compliant with the `WSGI` service side interface, the current implementation 
+  requires a multithreaded web server, such as `CherryPy`.
+
+---
+
+## CONFIGURATION (for advanced users)
+
+At startup, the Policy Service may load the service configuration from a file. 
+If no configuration file is found, the service will run with preset defaults.
+To find the default location for your system, run the following command.
+
+	```sh
+	$ policy-service --help
+	```
+
+The installation process does not install a configuration file. An easy way to
+create a new configuration file is to print the current configuration and save 
+it in a file. To do this, for a Linux or UNIX shell, run the following command.
+
+	```sh
+	$ policy-service --print-config > `policy-service --default-config`
+	```
+
+The default configuration file contents should look similar to the following.
+
+	```json
+	{
+	  "debug": false, 
+	  "audit": false, 
+	  "policy": {
+	    "policy_class": "adapt.greedy.Greedy", 
+	    "per_hosts_max_streams": 36, 
+	    "initial_streams": 8, 
+	    "update_incr_streams": 8, 
+	    "max_streams": 8, 
+	    "min_streams": 0
+	  }, 
+	  "ssl": {
+	    "ssl_enabled": false, 
+	    "ssl_private_key": "/path/to/ssl_private_key", 
+	    "ssl_certificate": "/path/to/ssl_certificate"
+	  }
+	}
+	```
+
+### Configuration Parameters
+
+ *  `debug`: a flag to enable debug logging.
+ 
+ *  `audit`: a flag to enable extended audit logging, in addition to the 
+     standard web access logging.
+     
+ *  `ssl`: configuration section for `SSL` parameters.
+     
+ *  `ssl_enabled`: a flag to enable `SSL` for the `HTTPS` protocol.
+ 
+ *  `ssl_private_key`: path to the private key file. *Note*: must be 
+     owned by the user that launches the `policy-service`.
+ 
+ *  `ssl_certificate`: path to the certificate file. *Note*: must be 
+     owned by the user that launches the `policy-service`.
+
+ *  `policy`: configuration section for policy parameters.
+ 
+ *  `policy_class`: full package and classname for the policy implementation.
+    *Note*: the package must be resolvable on the `PYTHONPATH`.
+
+Aside from the `policy_class`, all other parameters under the `policy` 
+category are passed directly to the policy implementation. The following 
+parameters are specific to the included `adapt.greedy.Greedy` policy 
+implementation.
+
+ *  `per_hosts_max_streams`: the maximum total aggregate number of streams 
+    allocated between any two pair of hosts.
+ 
+ *  `initial_streams`: the initial stream allocation per request.
+ 
+ *  `update_incr_streams`: the update increment for streams allocations.
+    
+ *  `max_streams`: the maximum steams allocated for a transfer resource.
+ 
+ *  `min_steams`: the minimum streams allocation which are issued when 
+    the `per_hosts_max_streams` has been reached. This can be used so that
+    transfer clients get at least some minimum number of steams rather than 
+    starving a client of resources.
+
+---
+
+## IMPLEMENTATION (for developers)
 
 The PS is a web service and conforms to the REST architecture and protocol 
 style. It is implemented on the Web.py framework and runs on the CherryPy web 
@@ -40,14 +205,14 @@ The *Transfer* resource has a JSON *representation*. This means that the PS
 accepts and returns a JSON representation of a Transfer resource during 
 client requests. 
 
-```json
-{
-  "id": "integer",
-  "source": "url",
-  "destination": "url",
-  "streams": "integer"
-}
-```
+	```json
+	{
+	  "id": "integer",
+	  "source": "url",
+	  "destination": "url",
+	  "streams": "integer"
+	}
+	```
 
 During certain operations, some of the fields are unnecessary, such as the `id`
 field when initially requesting the transfer allocation. Also, `streams` is not
@@ -57,16 +222,16 @@ In some operations the representation of the resource is not one transfer but
 instead a list of transfer resources. These have the same representation except
 that they are wrapped in a json dictionary keyed by the `id`.
 
-```json
-{
-  "0": {
-    "<transfer resource body>"
-  },
-  "N": {
-    "<transfer resource body>"
-  }
-}
-```
+	```json
+	{
+	  "0": {
+	    "<transfer resource body>"
+	  },
+	  "N": {
+	    "<transfer resource body>"
+	  }
+	}
+	```
 
 ### Methods
 
@@ -130,142 +295,6 @@ that they are wrapped in a json dictionary keyed by the `id`.
     of the PS. The representation is not formally defined because of the 
     diagnostic nature of this operation.
 
-## INSTALLATION
-
-The Policy Service requires Python 2.6+ and has been tested on Python 2.6 and 
-2\.7 on CentOS 6.x distributions of the Linux operating system. In addition to 
-Python, the `web.py` Python web framework (see [webpy.org](http://webpy.org)) 
-is required.
-
-The following steps may be used in order to install the Adapt Policy Service 
-and its prerequisites. Note that some of the following steps require 
-administrative privileges (i.e., on Linux, the ability to run the `sudo` 
-command).
-
-1. Install `web.py`, using one of the following options:
-
-    a. `yum install python-webpy`
-    
-    b. `pip install web.py`
-    
-    c. [download the `web.py` tarball](http://webpy.org/static/web.py-0.37.tar.gz),
-       untar it, and run `python setup.py install`. *If you do not have 
-       administrative privileges*, untar the package and set your `PYTHONPATH` 
-       to the expanded directory.
-
-2. Install the policy service
-
-    a. [download the `policy service` tarball](http://tbd.isi.edu), untar it, 
-       and run `python setup.py install`. *If you do not have administrative 
-       privileges*, untar the package, set your `PYTHONPATH` to the expanded
-       directory, and set your `PATH` to the `sbin` subdirectory.
-
-## LIMITATIONS
-
-* *Process does not detach*: the service currently does not detach and run
-  in the background as a *daemon* process.
-
-* *In memory state*: the service's state is retained in memory only. Therefore
-  state is not maintained between service restarts.
-  
-* *Steam allocations only*: the default policy implementation (the `Greedy` 
-  policy) only supports `stream` allocations.
-
-* *CherryPy only*: although the service is built on `web.py` and as such is 
-  compliant with the `WSGI` service side interface, the current implementation 
-  requires a multithreaded web server, such as `CherryPy`.
-
-## CONFIGURATION
-
-At startup, the Policy Service may load the service configuration from a file. 
-If no configuration file is found, the service will run with preset defaults.
-To find the default location for your system, run the following command.
-
-```sh
-$ policy-service --help
-```
-
-The installation process does not install a configuration file. An easy way to
-create a new configuration file is to print the current configuration and save 
-it in a file. To do this, for a Linux or UNIX shell, run the following command.
-
-```sh
-$ policy-service --print-config > `policy-service --default-config`
-```
-
-The default configuration file contents should look similar to the following.
-
-```json
-{
-  "debug": false, 
-  "audit": false, 
-  "policy": {
-    "policy_class": "adapt.greedy.Greedy", 
-    "per_hosts_max_streams": 36, 
-    "initial_streams": 8, 
-    "update_incr_streams": 8, 
-    "max_streams": 8, 
-    "min_streams": 0
-  }, 
-  "ssl": {
-    "ssl_enabled": false, 
-    "ssl_private_key": "/path/to/ssl_private_key", 
-    "ssl_certificate": "/path/to/ssl_certificate"
-  }
-}
-```
-
-### Configuration Parameters
-
- *  `debug`: a flag to enable debug logging.
- 
- *  `audit`: a flag to enable extended audit logging, in addition to the 
-     standard web access logging.
-     
- *  `ssl`: configuration section for `SSL` parameters.
-     
- *  `ssl_enabled`: a flag to enable `SSL` for the `HTTPS` protocol.
- 
- *  `ssl_private_key`: path to the private key file. *Note*: must be 
-     owned by the user that launches the `policy-service`.
- 
- *  `ssl_certificate`: path to the certificate file. *Note*: must be 
-     owned by the user that launches the `policy-service`.
-
- *  `policy`: configuration section for policy parameters.
- 
- *  `policy_class`: full package and classname for the policy implementation.
-    *Note*: the package must be resolvable on the `PYTHONPATH`.
-
-Aside from the `policy_class`, all other parameters under the `policy` 
-category are passed directly to the policy implementation. The following 
-parameters are specific to the included `adapt.greedy.Greedy` policy 
-implementation.
-
- *  `per_hosts_max_streams`: the maximum total aggregate number of streams 
-    allocated between any two pair of hosts.
- 
- *  `initial_streams`: the initial stream allocation per request.
- 
- *  `update_incr_streams`: the update increment for streams allocations.
-    
- *  `max_streams`: the maximum steams allocated for a transfer resource.
- 
- *  `min_steams`: the minimum streams allocation which are issued when 
-    the `per_hosts_max_streams` has been reached. This can be used so that
-    transfer clients get at least some minimum number of steams rather than 
-    starving a client of resources.
-
-## RUNNING
-
-*Start* the Policy Service by running the following command.
-
-```sh
-$ policy-service
-```
-
-*Stop* the Policy Service with `CTRL-C` (i.e., `^C`).
-
 ## SAMPLES
 
 The best way to learn how to use the service is to run simple HTTP(S) client 
@@ -292,10 +321,12 @@ just the listing of transfer requests.
 To delete the transfer, run `delete-transfer.sh 0` where again the `0` is 
 used to specify the `0th` transfer in the service.
 
-Finally, to get familiar with "what not to do", take a look at `malformed.json`
+Finally, to get familiar with _what not to do_, take a look at `malformed.json`
 and run `error.sh`.
 
-## Extending the Policy Service with custom Policies
+---
+
+## Extending the Policy Service with custom Policies (for advanced developers)
 
 The PS was designed to be extended with custom Policy implementations. The 
 `policy` module in the `adapt` package defines the interface for policies.
@@ -312,4 +343,15 @@ section of the configuration are passed to the constructor of the
 `policy_class` as keyword arguments.
 
 To learn more about the `adapt.policy.Policy` interface, inspect its 
-`docstring`s.
+`docstring`s. The following sequence can be followed.
+
+	$ python
+	Python 2.6.6 (r266:84292, Jul 10 2013, 22:48:45) 
+	[GCC 4.4.7 20120313 (Red Hat 4.4.7-3)] on linux2
+	Type "help", "copyright", "credits" or "license" for more information.
+	>>> import adapt
+	>>> help(adapt.policy.Policy)
+
+Similarly, `help(adapt.policy)` will print the `docstring`s for the 
+`adapt.policy` module, which includes the listing of exceptions defined in 
+the module.
