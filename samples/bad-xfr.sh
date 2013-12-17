@@ -3,6 +3,6 @@
 BASEURL="http://localhost:8080"
 HEADER="Content-Type: application/json"
 
-curl --data @bad-xfr.json --header "${HEADER}" "${BASEURL}/transfer"
+curl --data @malformed.json --header "${HEADER}" "${BASEURL}/transfer"
 
 echo
