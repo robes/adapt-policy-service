@@ -16,25 +16,28 @@
 
 from distutils.core import setup
 
-setup(name="policy-service",
-      version="0.1dev",
-      package_dir={"": "src/"},
-      packages=["adapt"],
-      scripts=["sbin/policy-service"],
-      requires=["web.py"],
-      license='Apache License, Version 2.0',
-      description="The Adapt Policy Service",
-      long_description=open('README').read(),
-      classifiers=[
-        "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Operating System :: POSIX :: Linux",
-        "Intended Audience :: System Administrators",
-        "Intended Audience :: Developers",
-        "Topic :: System :: Networking",
-        "Topic :: System :: Distributed Computing"
-        ]
-      )
+setup(
+    name='policy-service',
+    version='0.1.dev',
+    description='The Adapt Policy Service',
+    long_description=open('README').read(),
+    keywords='grid, hpc, file fransfer',
+    maintainer='adapt dev list',
+    maintainer_email='adapt@hpcrdm.lbl.gov',
+    packages=['adapt'],
+    scripts=['sbin/policy-service'],
+    requires=['web.py (>= 0.37)'],
+    license='Apache License, Version 2.0',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: System :: Networking'
+    ])
