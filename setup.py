@@ -24,7 +24,7 @@ setup(name="policy-service",
       requires=["web.py"],
       license='Apache License, Version 2.0',
       description="The Adapt Policy Service",
-      long_description=open('README.md').read(),
+      long_description=open('README').read(),
       classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: Apache Software License",
