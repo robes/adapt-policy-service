@@ -1,0 +1,2 @@
+include README CHANGES LICENSE
+recursive-include samples *.sh *.json
