@@ -1,2 +1,2 @@
-include README CHANGES LICENSE
+include README.rst CHANGES.rst LICENSE
 recursive-include samples *.sh *.json

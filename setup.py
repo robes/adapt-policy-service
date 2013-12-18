@@ -20,7 +20,7 @@ setup(
     name='policy-service',
     version='0.1.dev',
     description='The Adapt Policy Service',
-    long_description=open('README').read(),
+    long_description=open('README.rst').read(),
     keywords='grid, hpc, file fransfer',
     maintainer='adapt dev list',
     maintainer_email='adapt@hpcrdm.lbl.gov',
