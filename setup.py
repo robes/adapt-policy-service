@@ -16,16 +16,25 @@
 
 from distutils.core import setup
 
-setup(name="policy-adapt",
-      version="0.0",
-      description="policy service for file transfer resources",
-      package_dir={"adapt": "src/adapt"},
+setup(name="policy-service",
+      version="0.1dev",
+      package_dir={"": "src/"},
       packages=["adapt"],
       scripts=["sbin/policy-service"],
       requires=["web.py"],
+      license='Apache License, Version 2.0',
+      description="The Adapt Policy Service",
+      long_description=open('README.md').read(),
       classifiers=[
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Topic :: Internet :: WWW/HTTP",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Operating System :: POSIX :: Linux",
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Developers",
+        "Topic :: System :: Networking",
+        "Topic :: System :: Distributed Computing"
         ]
       )
