@@ -166,7 +166,7 @@ Configuration Parameters
     configuration section for policy parameters.
  
 ``policy_class``
-    full package and classname for the policy implementation. **Note**: the 
+    full package and classname for the policy implementation. *Note*: the 
     package must be resolvable on the ``PYTHONPATH``.
 
 
@@ -266,10 +266,10 @@ Methods
  
    This operation will create a new transfer allocation. It will invoke the 
    policy logic to determine what and how many resources are available for
-   the requesting client. In the body, the ``source`` and ``destination`` must be 
-   specified, but the ``id`` should not be specified. If successful, the ``body`` 
-   of the response will be a transfer representation with the ``id`` and the 
-   allocation parameters (e.g., ``streams``) filled in.
+   the requesting client. In the body, the ``source`` and ``destination`` must 
+   be specified, but the ``id`` should not be specified. If successful, the 
+   ``body`` of the response will be a transfer representation with the ``id`` 
+   and the allocation parameters (e.g., ``streams``) filled in.
     
 -  **LIST ALL TRANSFERS**
  
@@ -300,8 +300,9 @@ Methods
    when a client wishes to increase its resource allocations (e.g., increase 
    the number of streams that have been allocated to it) from its initial 
    allocation. The operation returns the revised allocation in the form of a
-   JSON transfer representation in the ``body`` of the response. Error ``404 NOT 
-   FOUND`` will be returned if there is no resource with ``id`` matching ``{ID}``.
+   JSON transfer representation in the ``body`` of the response. Error 
+   ``404 NOT FOUND`` will be returned if there is no resource with ``id`` 
+   matching ``{ID}``.
 
 -  **DELETE A TRANSFER**
  
@@ -310,7 +311,8 @@ Methods
  
    This operation deletes a transfer resource from the PS. The PS returns the 
    allocated resources to the pool of available resources. Error ``404 NOT 
-   FOUND`` will be returned if there is no resource with ``id`` matching ``{ID}``. 
+   FOUND`` will be returned if there is no resource with ``id`` matching 
+   ``{ID}``. 
 
 -  **DUMP INTERNAL STATE** (*DEBUG ONLY*)
  
@@ -347,8 +349,8 @@ just the listing of transfer requests.
 To delete the transfer, run ``delete-transfer.sh 0`` where again the ``0`` is 
 used to specify the ``0th`` transfer in the service.
 
-Finally, to get familiar with *what not to do*, take a look at ``malformed.json``
-and run ``error.sh``.
+Finally, to get familiar with *what not to do*, take a look at 
+``malformed.json`` and run ``error.sh``.
 
 
 DEVELOPING POLICIES
