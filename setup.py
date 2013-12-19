@@ -21,6 +21,8 @@ setup(
     version='0.1-dev',
     description='The Adapt Policy Service',
     long_description=open('README.rst').read(),
+    url='http://www.isi.edu/~schuler/adapt.html',
+    download_url='http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz',
     keywords='grid, hpc, file fransfer',
     maintainer='adapt dev list',
     maintainer_email='adapt@hpcrdm.lbl.gov',
