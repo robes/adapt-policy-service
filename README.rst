@@ -252,8 +252,8 @@ client requests. ::
 	}
 
 During certain operations, some of the fields are unnecessary, such as the ``id``
-field when initially requesting the transfer allocation. Also, ``streams`` is not
-necessary during the initial request as it is usually determined by the PS.
+field when initially requesting the transfer allocation. Also, ``streams`` is 
+not necessary during the initial request as it is usually determined by the PS.
 
 In some operations the representation of the resource is not one transfer but
 instead a list of transfer resources. These have the same representation except
@@ -378,10 +378,9 @@ the ``adapt.policy.Policy`` class. The behavior of its methods must conform to
 the ``docstring``s of the ``Policy`` class's methods and must only throw those 
 exceptions as defined in the ``adapt.policy`` module.
 
-As described in the *configuration* section, the ``policy_class`` parameter tells
-the policy service which policy to use. *Note* that the policy class must be 
-loadable from the ``PYTHONPATH``. All additional parameters from the ``policy`` 
-section of the configuration are passed to the constructor of the 
+As described in the *configuration* section, the ``policy_class`` parameter 
+tells the policy service which policy to use. *Note* that the policy class must be loadable from the ``PYTHONPATH``. All additional parameters from the 
+``policy`` section of the configuration are passed to the constructor of the 
 ``policy_class`` as keyword arguments.
 
 To learn more about the ``adapt.policy.Policy`` interface, inspect its 
