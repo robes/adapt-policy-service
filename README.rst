@@ -9,14 +9,19 @@ INTRODUCTION
 ============
 The Adapt Policy Service (PS) is a web service that manages transfer request 
 resource allocations. In a distributed computing environment, file transfers 
-between hosts depend on the availability of network resources, more 
-specifically we only consider those resources most pertinent to file transfer 
-performance. The most common resources allocations involve TCP buffer sizes at 
-the client or the host, which is limited by available memory on the host, or 
-parallel streams, which simply put is the number of parallel TCP connections 
-used to transfer data between hosts. The PS helps transfer clients to cooperate
-by issuing resource allocations. It is up to the transfer clients to cooperate 
-by limiting their network utilization according to the request allocation.
+between hosts depend on the availability of network resources, specifically 
+those resources most pertinent to file transfer performance. The most common 
+resource allocations involve TCP buffer sizes at the client or the host, which
+is limited by available memory on the host, or by parallel streams, which is 
+the number of parallel TCP connections used to transfer data between hosts. The
+PS helps transfer clients to cooperate by issuing resource allocations. It is 
+up to the transfer clients to cooperate by limiting their network utilization 
+according to the request allocation. The PS makes resource allocations based on
+a pluggable policy module. By default, the PS uses a "greedy" implementation 
+that regulates the min, max, and update increment of transfer streams that are
+allocated to clients on request. Other policies may be implemented and 
+dymically loaded by the PS, to modify its default resource allocation 
+algorithm.
 
 INSTALLATION
 ============
