@@ -44,25 +44,22 @@ your system if you have Python. To find out::
 
 If you do not have EasyInstall, see setuptools_.
 
-**Important Note:** the following instructions assume a ``bash`` shell.
-
 Installation (Single User)
 --------------------------
 
 If you do not have administrative privileges (such as ``root`` or ``sudo`` 
 privileges), you may use the following steps to install the service in your 
-``HOME`` directory. ::
+local ``PYTHONUSERSITE`` directory. ::
 
-    $ export PYTHONPATH=$PYTHONPATH:$HOME/lib/python2.6/site-packages
-    $ mkdir -p $HOME/lib/python2.6/site-packages
-    $ easy_install --prefix=$HOME http://webpy.org/static/web.py-0.37.tar.gz
-    $ easy_install --prefix=$HOME http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz
-
-**Important:** we recommend that you update your ``PYTHONPATH`` in your 
-``.bashrc`` or ``.profile``.
+    $ mkdir -p `python -m site --user-site`
+    $ easy_install -d `python -m site --user-site` \
+    >   http://webpy.org/static/web.py-0.37.tar.gz
+    $ easy_install -d `python -m site --user-site` \
+    >   http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz
 
 **Important:** the executable ``policy-service`` will be installed in 
-``$HOME/bin``.
+the ``PYTHONUSERSITE`` directory. You may want to add the ``PYTHONUSERSITE`` 
+directory to your ``PATH`` variable.
 
 Installation (Systemwide)
 -------------------------
@@ -87,7 +84,7 @@ Starting and Stopping the Service
 
   or ::
   
-  $ $HOME/bin/policy-service
+  $ `python -m site --user-site`/policy-service
 
 - **Stop** the Policy Service with ``CTRL-C`` (i.e., ``^C``).
 
