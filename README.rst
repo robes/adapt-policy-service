@@ -58,7 +58,10 @@ privileges), you may use the following steps to install the service in your
     $ easy_install --prefix=$HOME http://webpy.org/static/web.py-0.37.tar.gz
     $ easy_install --prefix=$HOME http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz
 
-**Important Note:** the executable ``policy-service`` will be installed in 
+**Important:** we recommend that you update your ``PYTHONPATH`` in your 
+``.bashrc`` or ``.profile``.
+
+**Important:** the executable ``policy-service`` will be installed in 
 ``$HOME/bin``.
 
 Installation (Systemwide)
