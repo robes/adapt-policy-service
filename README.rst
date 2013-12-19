@@ -377,7 +377,7 @@ The PS was designed to be extended with custom Policy implementations. The
 
 To create new policies, one must first implement a class that inherits from 
 the ``adapt.policy.Policy`` class. The behavior of its methods must conform to
-the ``docstring``s of the ``Policy`` class's methods and must only throw those 
+the ``docstrings`` of the ``Policy`` class's methods and must only throw those 
 exceptions as defined in the ``adapt.policy`` module.
 
 As described in the *configuration* section, the ``policy_class`` parameter 
