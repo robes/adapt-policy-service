@@ -18,7 +18,7 @@ from distutils.core import setup
 
 setup(
     name='policy-service',
-    version='0.1.dev',
+    version='0.1-dev',
     description='The Adapt Policy Service',
     long_description=open('README.rst').read(),
     keywords='grid, hpc, file fransfer',
