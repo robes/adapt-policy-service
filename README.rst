@@ -18,65 +18,73 @@ used to transfer data between hosts. The PS helps transfer clients to cooperate
 by issuing resource allocations. It is up to the transfer clients to cooperate 
 by limiting their network utilization according to the request allocation.
 
-USAGE
-=====
+INSTALLATION
+============
 
 This section covers basic usage and is intended for all users.
 
-Installation
-------------
+Prerequisites
+-------------
+
+1. Python 2.6+
+2. EasyInstall
 
 The Policy Service requires Python 2.6+ and has been tested on Python 2.6 and 
-2.7 on CentOS 6.x distributions of the Linux operating system. In addition to 
-Python, the ``web.py`` Python web framework (see webpy.org_) is required.
+2.7 on CentOS 6.x distributions of the Linux operating system.
 
 To find out which version of Python you have installed use the following 
 command. ::
 
 	$ python --version
 
-The following steps may be used in order to install the Adapt Policy Service 
-and its prerequisites. Note that some of the following steps require 
-administrative privileges (i.e., on Linux, the ability to run the ``sudo`` 
-command).
+In addition, EasyInstall is required. Typically, you will find EasyInstall on
+your system if you have Python. To find out::
 
-1. Install ``web.py``, using one of the following options:
+    $ which easy_install
 
-  a. (for Fedora or CentOS users) run ``yum install python-webpy``
-     
-  b. (for users of ``easy_install``) run ``easy_install web.py``
-     
-  c. (for all others) download the `web.py tarball`_, unpack it, and run 
-     ``python setup.py install``. *If you do not have administrative 
-     privileges*, unpack the tarball and set your ``PYTHONPATH`` to the 
-     expanded directory. ::
-     
-     $ wget http://webpy.org/static/web.py-0.37.tar.gz
-     $ tar -zxf web.py-0.37.tar.gz
-     $ cd web.py-0.37
-     $ sudo python setup.py install
+If you do not have EasyInstall, see setuptools_.
 
-2. Install the policy service
+**Important Note:** the following instructions assume a ``bash`` shell.
 
-  a. (for users of ``easy_install``) run ``easy_install policy-service``
-     (**NOT SUPPORTED YET**)
-     
-  b. (for all users) download the `policy service tarball`_, unpack it, 
-     and run ``python setup.py install``. *If you do not have administrative 
-     privileges*, unpack the tarball, set your ``PYTHONPATH`` to the expanded
-     directory, and set your ``PATH`` to the ``sbin`` subdirectory. ::
+Installation (Single User)
+--------------------------
 
-     $ wget http://tbd.isi.edu/static/policy-service-0.10.tar.gz
-     $ tar -zxf policy-service-0.10.tar.gz
-     $ cd policy-service-0.10
-     $ sudo python setup.py install
+If you do not have administrative privileges (such as ``root`` or ``sudo`` 
+privileges), you may use the following steps to install the service in your 
+``HOME`` directory. ::
 
-Running The Service
--------------------
+    $ export PYTHONPATH=$PYTHONPATH:$HOME/lib/python2.6/site-packages
+    $ mkdir -p $HOME/lib/python2.6/site-packages
+    $ easy_install --prefix=$HOME http://webpy.org/static/web.py-0.37.tar.gz
+    $ easy_install --prefix=$HOME http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz
+
+**Important Note:** the executable ``policy-service`` will be installed in 
+``$HOME/bin``.
+
+Installation (Systemwide)
+-------------------------
+
+If you have administrative privileges and you with to make a system 
+installation of the Policy Service that can be used by any user of your host,
+use the following steps. The steps must be run as ``root`` or by using the 
+``sudo`` command. ::
+
+    # easy_install http://webpy.org/static/web.py-0.37.tar.gz
+    # easy_install http://www.isi.edu/~schuler/static/policy-service-0.1-dev.tar.gz
+
+USAGE
+=====
+
+Starting and Stopping the Service
+---------------------------------
 
 - **Start** the Policy Service by running the following command. ::
 
   $ policy-service
+
+  or ::
+  
+  $ $HOME/bin/policy-service
 
 - **Stop** the Policy Service with ``CTRL-C`` (i.e., ``^C``).
 
@@ -392,3 +400,4 @@ the module.
 .. _webpy.org: http://webpy.org
 .. _`web.py tarball`: http://webpy.org/static/web.py-0.37.tar.gz
 .. _`policy service tarball`: http://tbd.isi.edu/static/policy-service-0.1.tar.gz
+.. _setuptools: https://pypi.python.org/pypi/setuptools
