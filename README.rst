@@ -339,26 +339,26 @@ use the ``curl`` command are included. See the ``samples`` subdirectory. *Note*
 that the following examples assume that the sample scripts are run from the 
 same host as the ``policy-service`` is running on.
 
-To create a transfer, run ``create-new-transfer.sh`` and look inside of 
-``new-transfer-body.json`` to see what was sent in the body.
+- To create a transfer, run ``create-new-transfer.sh`` and look inside of 
+  ``new-transfer-body.json`` to see what was sent in the body.
 
-Now, take a look at the newly created transfer by running ``get-transfer.sh``. 
-This will return the complete list (albeit just one) of transfer resources
-in the service.
+- Now, take a look at the newly created transfer by running ``get-transfer.sh``.
+  This will return the complete list (albeit just one) of transfer resources
+  in the service.
 
-To update the new transfer, run ``update-transfer.sh 0`` where the ``0`` gets 
-concatenated with the base ``URL`` in order to direct the update to the ``0th`` 
-indexed transfer request.
+- To update the new transfer, run ``update-transfer.sh 0`` where the ``0`` gets 
+  concatenated with the base ``URL`` in order to direct the update to the 
+  ``0th`` indexed transfer request.
 
-Now, dump the state of the service using the ``dump-state.sh`` script. You will 
-notice that the state includes the aggregate resource allocations, and not 
-just the listing of transfer requests.
+- Now, dump the state of the service using the ``dump-state.sh`` script. You 
+  will notice that the state includes the aggregate resource allocations, and 
+  not just the listing of transfer requests.
 
-To delete the transfer, run ``delete-transfer.sh 0`` where again the ``0`` is 
-used to specify the ``0th`` transfer in the service.
+- To delete the transfer, run ``delete-transfer.sh 0`` where again the ``0`` is 
+  used to specify the ``0th`` transfer in the service.
 
-Finally, to get familiar with *what not to do*, take a look at 
-``malformed.json`` and run ``error.sh``.
+- Finally, to get familiar with *what not to do*, take a look at 
+  ``malformed.json`` and run ``error.sh``.
 
 
 DEVELOPING POLICIES
