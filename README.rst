@@ -118,7 +118,7 @@ The following command line options are supported by the Policy Service.
     system uses a multihomed network configuration.
 
 ``--port=<port>``
-    Listen on port number specified by ``port``. By default the service will 
+    Listen on port number specified by ``<port>``. By default the service will
     listen on port 8080.
 
 Limitations
@@ -127,6 +127,10 @@ Limitations
 - *Process does not detach*: the service currently does not detach and run
   in the background as a *daemon* process.
 
+- *HTTPS only*: the service supports ``HTTPS`` for secure communication between
+  the client and the server. We plan to support the ``GSI`` (Grid Security 
+  Infrastructure) protocol in a future release.
+
 - *In memory state*: the service's state is retained in memory only. Therefore
   state is not maintained between service restarts.
 
@@ -134,7 +138,7 @@ Limitations
   policy) only supports ``stream`` allocations.
 
 - *CherryPy only*: although the service is built on ``web.py`` and as such is 
-  compliant with the ``WSGI`` service side interface, the current implementation 
+  compliant with the ``WSGI`` service side interface, the current implementation
   requires a multithreaded web server, such as ``CherryPy``.
 
 
