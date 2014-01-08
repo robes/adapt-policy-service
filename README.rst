@@ -83,15 +83,43 @@ USAGE
 Starting and Stopping the Service
 ---------------------------------
 
-- **Start** the Policy Service by running the following command. ::
+- **Start** the Policy Service by running the following command::
 
   $ policy-service
 
-  or ::
+  or, if you installed in your ``PYTHONUSERSITE`` directory::
   
   $ `python -m site --user-site`/policy-service
 
 - **Stop** the Policy Service with ``CTRL-C`` (i.e., ``^C``).
+
+Command-Line Options
+--------------------
+
+The following command line options are supported by the Policy Service.
+
+``--help``
+    Print the usage message, including this listing of options.
+
+``--debug``
+    More verbose logging messages.
+
+``--print-config``
+    Displays the configuration file used by the Policy Services.
+
+``--default-config``
+    Displays the default file path to the configuration file.
+
+``--config=<file>``
+    Load the configuration file from the file path specified by ``<file>``.
+
+``--ipaddr=<ipaddr>``
+    Listen on the IP Address specified by ``<ipaddr>``. This is useful is your 
+    system uses a multihomed network configuration.
+
+``--port=<port>``
+    Listen on port number specified by ``port``. By default the service will 
+    listen on port 8080.
 
 Limitations
 -----------
