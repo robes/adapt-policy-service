@@ -53,8 +53,16 @@ Installation (Single User)
 --------------------------
 
 If you do not have administrative privileges (such as ``root`` or ``sudo`` 
-privileges), you may use the following steps to install the service in your 
-local ``PYTHONUSERSITE`` directory. ::
+privileges), you may install the Policy Service in a user directory called 
+the ``PYTHONUSERSITE``. The ``PYTHONUSERSITE`` is defined by your Python
+installation. You do not need to configure Python, as it comes pre-configured 
+with a default ``PYTHONUSERSITE`` defined. If you would like to know where 
+your ``PYTHONUSERSITE`` is at, run the following command::
+
+    $ python -m site --user-site
+
+You may install the Policy Service in the ``PYTHONUSERSITE`` using the 
+following commands::
 
     $ mkdir -p `python -m site --user-site`
     $ easy_install -d `python -m site --user-site` \
@@ -64,7 +72,7 @@ local ``PYTHONUSERSITE`` directory. ::
 
 **Important:** the executable ``policy-service`` will be installed in 
 the ``PYTHONUSERSITE`` directory. You may want to add the ``PYTHONUSERSITE`` 
-directory to your ``PATH`` variable.
+directory to your ``PATH`` variable, but it is not required.
 
 Installation (Systemwide)
 -------------------------
@@ -83,13 +91,15 @@ USAGE
 Starting and Stopping the Service
 ---------------------------------
 
-- **Start** the Policy Service by running the following command::
-
-  $ policy-service
-
-  or, if you installed in your ``PYTHONUSERSITE`` directory::
+- **Start** the Policy Service by invoking the ``policy-service`` executable.
   
-  $ `python -m site --user-site`/policy-service
+  If you did a Systemwide installation, run the following command::
+
+    $ policy-service
+
+  or, if you installed in the ``PYTHONUSERSITE`` directory::
+  
+    $ `python -m site --user-site`/policy-service
 
 - **Stop** the Policy Service with ``CTRL-C`` (i.e., ``^C``).
 
@@ -108,14 +118,21 @@ The following command line options are supported by the Policy Service.
     Displays the configuration file used by the Policy Services.
 
 ``--default-config``
-    Displays the default file path to the configuration file.
+    Displays the default file path to the configuration file. By default, the 
+    configuration ``policy-service`` reads the configuration from this file. 
+    If the configuration file does not exist, it operates with pre-defined 
+    defaults that will work for most basic usage of the services.
 
 ``--config=<file>``
-    Load the configuration file from the file path specified by ``<file>``.
+    Load the configuration file from the file path specified by ``<file>``. If 
+    you do not want to read the configuration file from the ``default-config``
+    location, you may specify an alternative file to read the configuration 
+    from.
 
 ``--ipaddr=<ipaddr>``
-    Listen on the IP Address specified by ``<ipaddr>``. This is useful is your 
-    system uses a multihomed network configuration.
+    Listen on the IP Address specified by ``<ipaddr>``. This is useful if your 
+    system uses a multihomed network configuration. Most users will not need 
+    to use this setting.
 
 ``--port=<port>``
     Listen on port number specified by ``<port>``. By default the service will
